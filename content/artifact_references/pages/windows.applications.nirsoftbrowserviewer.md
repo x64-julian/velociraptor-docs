@@ -10,11 +10,15 @@ for parsing browser history from a variety of browsers.
 More information about the tool can be found here
 https://www.nirsoft.net/utils/browsing_history_view.html
 
-BrowsingHistoryView v2.45 - View browsing history of your Web browsers
-Copyright (c) 2012 - 2020 Nir Sofer
+NOTE: This binary is treated as malware by many detection engines
+since it is capable of dumping user passwords and search history!!!
+Running it on the endpoint may (hopefully) trigger endpoint defences.
+
+BrowsingHistoryView v2.55 - View browsing history of your Web browsers
+Copyright (c) 2012 - 2023 Nir Sofer
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Applications.NirsoftBrowserViewer
 description: |
   This artifact wraps the Nirsoft BrowsingHistoryView tool - a tool
@@ -23,12 +27,17 @@ description: |
   More information about the tool can be found here
   https://www.nirsoft.net/utils/browsing_history_view.html
 
-  BrowsingHistoryView v2.45 - View browsing history of your Web browsers
-  Copyright (c) 2012 - 2020 Nir Sofer
+  NOTE: This binary is treated as malware by many detection engines
+  since it is capable of dumping user passwords and search history!!!
+  Running it on the endpoint may (hopefully) trigger endpoint defences.
+
+  BrowsingHistoryView v2.55 - View browsing history of your Web browsers
+  Copyright (c) 2012 - 2023 Nir Sofer
 
 tools:
  - name: NirsoftBrowsingHistoryView64
    url: https://github.com/Velocidex/Tools/raw/main/BrowsingHistoryView/BrowsingHistoryView-amd64.exe
+   expected_hash: c50d3f139bc7ed05fb0f5e25671ec0268b577d5930f27964291cc8747970f2c3
    serve_locally: true
 
 parameters:
@@ -56,15 +65,15 @@ sources:
 
     query: |
       -- firstly set timebounds for performance
-      LET DateAfterTime <= if(condition=DateAfter,
+      LET DateAfterTime &lt;= if(condition=DateAfter,
         then=timestamp(epoch=DateAfter), else=timestamp(epoch="1600-01-01"))
-      LET DateBeforeTime <= if(condition=DateBefore,
+      LET DateBeforeTime &lt;= if(condition=DateBefore,
         then=timestamp(epoch=DateBefore), else=timestamp(epoch="2200-01-01"))
 
-      LET CSVFile <= tempfile(extension='.csv')
+      LET CSVFile &lt;= tempfile(extension='.csv')
 
       -- Download the binary and create a csv file to write on.
-      LET tmp_exe = SELECT FullPath AS BinPath
+      LET tmp_exe = SELECT OSPath AS BinPath
       FROM Artifact.Generic.Utils.FetchBinary(ToolName="NirsoftBrowsingHistoryView64")
 
       LET results = SELECT CSVFile
@@ -93,7 +102,8 @@ sources:
         FROM parse_csv(filename=CSVFile)
       })
       WHERE URL =~ URLRegex AND
-            Visited > DateAfterTime AND
-            Visited < DateBeforeTime
+            Visited &gt; DateAfterTime AND
+            Visited &lt; DateBeforeTime
 
-```
+</code></pre>
+

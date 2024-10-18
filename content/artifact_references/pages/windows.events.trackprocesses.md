@@ -15,7 +15,7 @@ possible to run many other artifacts that depend on the process
 tracker.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Events.TrackProcesses
 description: |
   This artifact uses sysmon and pslist to keep track of running
@@ -63,14 +63,16 @@ sources:
 
     query: |
       // Make sure sysmon is installed.
-      LET _ <= SELECT * FROM Artifact.Windows.Sysinternals.SysmonInstall(
+      LET _ &lt;= SELECT * FROM Artifact.Windows.Sysinternals.SysmonInstall(
          SysmonFileLocation=SysmonFileLocation)
 
       LET UpdateQuery =
             SELECT * FROM foreach(row={
               SELECT *,
                      get(member='EventData') AS EventData
-              FROM watch_etw(guid='{5770385f-c22a-43e0-bf4c-06f5698ffbd9}')
+              FROM watch_etw(
+                guid='{5770385f-c22a-43e0-bf4c-06f5698ffbd9}',
+                description='Microsoft-Windows-Sysmon/Operational')
             }, query={
               SELECT * FROM switch(
               start={
@@ -99,9 +101,9 @@ sources:
                            TerminalSessionId= EventData.TerminalSessionId,
                            IntegrityLevel= EventData.IntegrityLevel,
                            Hashes=parse_string_with_regex(regex=[
-                             "SHA256=(?P<SHA256>[^,]+)",
-                             "MD5=(?P<MD5>[^,]+)",
-                             "IMPHASH=(?P<IMPHASH>[^,]+)"],
+                             "SHA256=(?P&lt;SHA256&gt;[^,]+)",
+                             "MD5=(?P&lt;MD5&gt;[^,]+)",
+                             "IMPHASH=(?P&lt;IMPHASH&gt;[^,]+)"],
                            string=EventData.Hashes)
                        ) AS data,
                        EventData.UtcTime AS start_time,
@@ -132,13 +134,14 @@ sources:
                    CommandLine=CommandLine) AS data
               FROM pslist()
 
-      LET Tracker <= process_tracker(
+      LET Tracker &lt;= process_tracker(
+         max_size=MaxSize,
          enrichments=if(condition=AddEnrichments, then=[
-           '''x=>if(
+           '''x=&gt;if(
                 condition=NOT x.Data.VersionInformation AND x.Data.Image,
                 then=dict(VersionInformation=parse_pe(file=x.Data.Image).VersionInformation))
            ''',
-           '''x=>if(
+           '''x=&gt;if(
                 condition=NOT x.Data.OriginalFilename OR x.Data.OriginalFilename = '-',
                 then=dict(OriginalFilename=x.Data.VersionInformation.OriginalFilename))
            '''], else=[]),
@@ -147,4 +150,5 @@ sources:
       SELECT * FROM process_tracker_updates()
       WHERE update_type = "stats" OR AlsoForwardUpdates
 
-```
+</code></pre>
+

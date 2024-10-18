@@ -13,7 +13,7 @@ This artifact extracts all the trusted hashes from a system by
 parsing all the cat files.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.System.CatFiles
 description: |
    Windows stores many hashes in .cat files. These catalog files
@@ -42,7 +42,7 @@ sources:
       SELECT OS From info() where OS = 'windows'
 
     query: |
-        LET parsed_cats = SELECT Name, parse_pkcs7(data=read_file(filename=FullPath)) AS PKCS7
+        LET parsed_cats = SELECT Name, parse_pkcs7(data=read_file(filename=OSPath)) AS PKCS7
         FROM glob(globs=CatGlobs)
 
         -- Extract the CertificateTrustList and Subject who signed the cat file.
@@ -58,4 +58,5 @@ sources:
             })
         })
 
-```
+</code></pre>
+

@@ -9,7 +9,7 @@ A demo plugin showing some GUI features.
 This plugin is also used for tests.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Demo.Plugins.GUI
 description: |
   A demo plugin showing some GUI features.
@@ -24,12 +24,23 @@ resources:
 
 parameters:
   - name: ChoiceSelector
+    description: Choose one item from a selection
     type: choices
     default: First Choice
     choices:
       - First Choice
       - Second Choice
       - Third Choice
+
+  - name: MultiChoiceSelector
+    description: Choose one or more items from a selection
+    type: multichoice
+    default: '["Bananas"]'
+    choices:
+      - Apples
+      - Bananas
+      - Oranges
+      - Grapes
 
   - name: Hashes
     validating_regex: '^\s*([A-F0-9]+\s*)+$'
@@ -49,7 +60,7 @@ parameters:
   - name: Flag
     friendly_name: A Flag with a name
     type: bool
-    default: Y
+    default: True
 
   - name: Flag2
     type: bool
@@ -115,7 +126,7 @@ column_types:
 sources:
   - query: |
       SELECT base64encode(string="This should popup in a hex editor") AS Base64Hex,
-             ChoiceSelector, Flag, Flag2, Flag3,
+             ChoiceSelector, MultiChoiceSelector, Flag, Flag2, Flag3,
              OffFlag, StartDate, StartDate2, StartDate3,
              CSVData, CSVData2, JSONData, JSONData2,
              len(list=FileUpload1) AS FileUpload1Length
@@ -266,6 +277,7 @@ sources:
           {{ define "Q" }}
             SELECT _ts, CPUPercent
             FROM monitoring(
+                  client_id="server",
                   artifact="Server.Monitor.Health/Prometheus",
                   start_time=now() - 10 * 60)
             LIMIT 100
@@ -284,6 +296,7 @@ sources:
           */
           SELECT timestamp(epoch=_ts) AS Timestamp, CPUPercent
           FROM monitoring(
+            client_id="server",
             source="Prometheus",
             artifact="Server.Monitor.Health",
             start_time=now() - 10 * 60)
@@ -292,13 +305,14 @@ sources:
                timestamp(epoch=_ts) AS Timestamp,
                dict(X=CPUPercent, Y=1) AS Dict
           FROM monitoring(
+            client_id="server",
             source="Prometheus",
             artifact="Server.Monitor.Health",
             start_time=now() - 10 * 60)
 
           -- Add the time series into the timeline.
           SELECT timeline_add(
-              key="Timestamp", name="Time 你好世界 'line' &\" ",
+              key="Timestamp", name="Time 你好世界 'line' &amp;\" ",
               query=T1, timeline="Test \"Timeline 你好世界\""),
            timeline_add(
               key="Timestamp", name="2",
@@ -348,13 +362,48 @@ sources:
 
           */
 
-          LET ColumnTypes = dict(`StartDate`='timestamp',
+          LET ColumnTypes = dict(`StartDate`='timestamp', Download='download',
                                  Hex='hex', Upload='preview_upload')
           LET Hex = "B0 EC 48 5F 18 77"
 
           SELECT Hex, StartDate, hash(accessor="data", path="Hello") AS Hash,
                  upload(accessor="data", file="Hello world",
-                        name="test.txt") AS Upload
+                        name="test.txt") AS Upload,
+                 upload(accessor="data", file="Hello world",
+                        name="test.txt") AS Download
           FROM source()
 
-```
+      - type: VQL
+        template: |
+          /* Test the JSON renderer. */
+          LET Strings = SELECT "Hello World" AS A FROM range(end=100)
+
+          LET MultiColumn = SELECT * FROM chain(a={
+            SELECT 1 AS A FROM range(end=10)
+          }, b={
+            SELECT 1 AS B FROM range(end=10)
+          })
+
+          SELECT dict(
+            MultiColumn=MultiColumn,
+            Strings=Strings.A,
+            `NULL`=NULL,
+            Bool=TRUE,
+            BoolF=FALSE,
+            BinaryData=base64encode(string="hello world"),
+            Rows={
+              SELECT count() AS Count,
+                     rand() AS R
+              FROM range(end=20)
+            },
+            Integer=1, Float=1.235,
+            LongString="Hello world " * 100,
+            MixedList=[1, 2, dict(A=3)],
+            NestedDict=dict(
+                Foo=dict(A=1,
+                         B=dict(z=1,
+                                nesting=dict(Foo="Hello world"))))) AS A
+          FROM scope()
+
+</code></pre>
+

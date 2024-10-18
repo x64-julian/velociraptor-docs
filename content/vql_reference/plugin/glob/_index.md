@@ -60,7 +60,7 @@ Glob expressions are case insensitive and may contain the following wild cards:
 By default globs do not expand environment variables. If you need to
 expand environment variables use the `expand()` function explicitly:
 
-```sql
+```vql
 glob(globs=expand(string="%SystemRoot%\System32\Winevt\Logs\*"))
 ```
 
@@ -68,7 +68,7 @@ glob(globs=expand(string="%SystemRoot%\System32\Winevt\Logs\*"))
 
 The following searches the raw NTFS disk for event logs.
 
-```sql
+```vql
 SELECT FullPath FROM glob(
 globs="C:\Windows\System32\Winevt\Logs\*.evtx",
 accessor="ntfs")
@@ -81,7 +81,7 @@ directory - i.e. the glob pattern is appended to the root
 parameter.  The `root` parameter is useful if the directory name
 itself may contain glob characters.
 
-## Following symlinks
+### Following symlinks
 
 On Unix like operating systems symlinks are used
 extensively. Symlinks complicate the job of the glob() plugin
@@ -93,7 +93,7 @@ By default glob() follows symlinks but also checks for cycles by
 checking that a target of a symlink has not been seen before. You
 can disable this behavior with `nosymlink=TRUE`
 
-## Setting a recursion callback
+### Setting a recursion callback
 
 Sometimes it is useful to prevent glob() from recursing into a
 directory. For example, if we know a directory can not possibly
@@ -112,7 +112,33 @@ files in all directories other than /proc, /sys or /snap
 
 ```vql
 SELECT * FROM glob(globs='/**/*.pem',
-    recursion_callback="x=>NOT x.Name =~ '^/(proc|sys|snap)'")
+    recursion_callback="x=>NOT x.OSPath =~ '^/(proc|sys|snap)'")
+```
+
+### A note about escaping.
+
+Windows paths often contain backslashes which are difficult to
+work with because they need to be escaped both by regular
+expressions **and** VQL strings.
+
+This means that trying to add a recursion callback will expand
+each backslash into 8 backslashes (once for regular expressions
+and twice for nested strings).
+
+```vql
+SELECT * FROM glob(
+  globs="C:/Users/*/*",
+  recursion_callback="x=> NOT x.OSPath =~ 'C:\\\\\\\\Users\\\\\\\\Admini'")
+```
+
+It is a bit easier to use variables and raw strings
+
+```vql
+LET Exclude <= '''C:\\Users\\Admin'''
+
+SELECT * FROM glob(
+  globs="C:/Users/*/*",
+  recursion_callback="x=> NOT x.OSPath =~ Exclude")
 ```
 
 

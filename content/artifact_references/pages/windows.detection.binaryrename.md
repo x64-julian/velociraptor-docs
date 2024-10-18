@@ -16,7 +16,7 @@ detection on an Internal or Original name, the Filename entry can be set to
 an unlikely value - e.g ANY or left blank.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Detection.BinaryRename
 author: "Matt Green - @mgreen27"
 description: |
@@ -124,7 +124,7 @@ parameters:
 
 sources:
   - query: |
-      LET bins <= SELECT
+      LET bins &lt;= SELECT
             if(condition=Filename='',then='ANY',
                 else=lowcase(string=Filename)) AS Filename,
             if(condition=Internal='',then='ANY',
@@ -134,10 +134,10 @@ sources:
         FROM VersionInfoTable
 
       SELECT
-        FullPath,Name,Size,
-        parse_pe(file=FullPath).VersionInformation as VersionInformation,
-        hash(path=FullPath) as Hash,
-        Mtime,Atime,Ctime,Btime
+        OSPath, Name, Size,
+        parse_pe(file=OSPath).VersionInformation as VersionInformation,
+        hash(path=OSPath) as Hash,
+        Mtime, Atime, Ctime, Btime
       FROM glob(globs=TargetGlob)
       WHERE
         NOT IsDir AND NOT IsLink
@@ -145,8 +145,9 @@ sources:
             (( lowcase(string=VersionInformation.OriginalFilename) in bins.Original
                 OR lowcase(string=VersionInformation.InternalName) in bins.Internal )
                 AND NOT lowcase(string=Name) in bins.Filename )
-        OR FullPath =~ 'C:\\\\Windows\\\\System32\\\\(osk|Magnify|Narrator|DisplaySwitch).exe$'
+        OR OSPath =~ 'C:\\\\Windows\\\\System32\\\\(osk|Magnify|Narrator|DisplaySwitch).exe$'
             AND NOT VersionInformation.OriginalFilename =~ '^(osk|SR|Narrator|ScreenMagnifier|DisplaySwitch)\.exe$'
         )
 
-```
+</code></pre>
+

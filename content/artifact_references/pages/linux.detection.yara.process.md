@@ -21,7 +21,7 @@ Note: the Yara scan will stop after one hit. Multi-string rules will also only
 show one string in returned rows.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Linux.Detection.Yara.Process
 author: Matt Green - @mgreen27
 description: |
@@ -40,6 +40,9 @@ description: |
 
   Note: the Yara scan will stop after one hit. Multi-string rules will also only
   show one string in returned rows.
+
+aliases:
+- MacOS.Detection.Yara.Process
 
 type: CLIENT
 parameters:
@@ -80,11 +83,11 @@ parameters:
 
 sources:
   - precondition:
-      SELECT OS From info() where OS = 'linux'
+      SELECT OS From info() where OS = 'linux' OR OS = 'darwin'
 
     query: |
       -- check which Yara to use
-      LET yara_rules <= YaraUrl || YaraRule
+      LET yara_rules &lt;= YaraUrl || YaraRule
 
       -- find velociraptor process
       LET me = SELECT Pid FROM pslist(pid=getpid())
@@ -111,19 +114,24 @@ sources:
                 ProcessName,
                 CommandLine,
                 Pid,
-                Namespace,
                 Rule,
+                Tag,
                 Meta,
                 String.Name as YaraString,
                 String.Offset as HitOffset,
-                upload( accessor='scope', 
-                    file='String.Data', 
-                    name=format(format="%v-%v_%v_%v", 
-                    args=[ ProcessName, Pid, String.Offset, ContextBytes ]
-                        )) as HitContext
-             FROM yara(files=format(format="/%d", args=Pid),
-                       accessor='process',rules=yara_rules,
-                       context=ContextBytes, number=NumberOfHits )
+                if(condition=String.Data,
+                   then=upload(
+                     accessor='scope',
+                     file='String.Data',
+                     name=format(format="%v-%v_%v_%v",
+                     args=[ ProcessName, Pid, String.Offset, ContextBytes ]
+                    ))) as HitContext
+             FROM proc_yara(
+                        pid=Pid,
+                        rules=yara_rules,
+                        context=ContextBytes,
+                        number=NumberOfHits
+                    )
           })
 
       -- upload hits using the process accessor
@@ -144,4 +152,6 @@ sources:
 column_types:
   - name: HitContext
     type: preview_upload
-```
+
+</code></pre>
+

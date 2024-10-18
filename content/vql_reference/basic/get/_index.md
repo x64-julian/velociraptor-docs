@@ -28,17 +28,18 @@ default||Any
 
 Gets the member field from item.
 
-This is useful to index an item from an array. For example:
+This is useful to index an item from an array.
 
 ### Example
 
-```sql
+```vql
 select get(item=[dict(foo=3), 2, 3, 4], member='0.foo') AS Foo from scope()
-
+```
+```json
 [
- {
-   "Foo": 3
- }
+  {
+    "Foo": 3
+  }
 ]
 ```
 

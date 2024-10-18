@@ -8,7 +8,7 @@ Applications that will be started up from the various run key
 locations.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Sys.StartupItems
 description: |
     Applications that will be started up from the various run key
@@ -16,9 +16,6 @@ description: |
 
 reference:
   - https://docs.microsoft.com/en-us/windows/desktop/setupapi/run-and-runonce-registry-keys
-
-imports:
- - Windows.Forensics.Lnk
 
 parameters:
   - name: AlsoUpload
@@ -55,7 +52,7 @@ sources:
       SELECT OS From info() where OS = 'windows'
 
     query: |
-        LET approved <=
+        LET approved &lt;=
            SELECT Name as ApprovedName,
                   encode(string=Data, type="hex") as Enabled
            FROM glob(globs=startupApprovedGlobs.KeyGlobs,
@@ -82,21 +79,11 @@ sources:
             FROM scope()
             WHERE OSPath.Basename =~ ".(bat|ini|ps1)$"
         }, lnk={
-            SELECT dict(
-               _Parsed=_value,
-               HeaderCreationTime=_value.CreationTime,
-               HeaderAccessTime=_value.AccessTime,
-               HeaderWriteTime=_value.WriteTime,
-               FileSize=_value.FileSize,
-               Target=_value.LinkInfo.Target,
-               Name=_value.NameInfo.Name,
-               RelativePath=_value.RelativePathInfo.RelativePath,
-               WorkingDir=_value.WorkingDirInfo.WorkingDir,
-               Arguments=_value.ArgumentInfo.Arguments,
-               Icons=_value.IconInfo.IconLocations) AS Details
-            FROM foreach(row=parse_binary(
-               filename=OSPath, profile=Profile, struct="ShellLinkHeader"))
-            WHERE OSPath.Basename =~ ".lnk"
+            SELECT { 
+                  SELECT SourceFile, ShellLinkHeader, LinkInfo, LinkTarget, StringData, ExtraData 
+                  FROM Artifact.Windows.Forensics.Lnk(TargetGlob=OSPath)
+                } as Details
+            FROM scope()
         }, default={
             SELECT hash(path=OSPath) AS Details
             FROM scope()
@@ -114,4 +101,5 @@ sources:
            first=registry_runners,
            second=file_runners)
 
-```
+</code></pre>
+

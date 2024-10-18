@@ -32,7 +32,7 @@ symlinks. Yara is not applied to the containers, only contained contents
 that are not containers.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Generic.Detection.Yara.Zip
 author: "Matt Green - @mgreen27"
 description: |
@@ -108,7 +108,7 @@ sources:
 
       -- recursive search function
       LET Recurse(Container, File, Accessor, RecursionRounds) = SELECT * FROM if(
-        condition=RecursionRounds < MaxRecursions,
+        condition=RecursionRounds &lt; MaxRecursions,
         then={
            SELECT * FROM foreach(
                 row={
@@ -116,7 +116,7 @@ sources:
                     FROM glob(accessor='zip',
                        root=pathspec(DelegatePath=File, DelegateAccessor=Accessor),
                        globs='**')
-                    WHERE NOT IsDir AND Size > 0
+                    WHERE NOT IsDir AND Size &gt; 0
                 },
                 query={
                     SELECT *
@@ -140,11 +140,13 @@ sources:
                                 Rule, Tags, Meta,
                                 String.Name as YaraString,
                                 String.Offset as HitOffset,
-                                upload( accessor='scope',
+                                if(condition=String.Data,
+                                   then=upload(
+                                    accessor='scope',
                                     file='String.Data',
                                     name=format(format="%v_%v",
                                     args=[ OSPath.HumanString, String.Offset ]
-                                        )) as HitContext
+                                   ))) as HitContext
                               FROM yara(accessor='zip',files=OSPath,rules=YaraRule,
                                 context=ContextBytes, number=NumberOfHits)
                             })
@@ -168,4 +170,6 @@ sources:
 column_types:
   - name: HitContext
     type: preview_upload
-```
+
+</code></pre>
+

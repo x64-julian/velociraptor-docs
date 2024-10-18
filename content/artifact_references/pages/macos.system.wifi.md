@@ -4,13 +4,19 @@ hidden: true
 tags: [Client Artifact]
 ---
 
-This artifact looks for all Wifi networks to which a host has joined.  This can be useful in determining where a machine has been, or if a user has joined an illegitimate or unauthorized wireless network.
+This artifact looks for all Wifi networks to which a host has
+joined.  This can be useful in determining where a machine has
+been, or if a user has joined an illegitimate or unauthorized
+wireless network.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: MacOS.System.Wifi
 description: |
-   This artifact looks for all Wifi networks to which a host has joined.  This can be useful in determining where a machine has been, or if a user has joined an illegitimate or unauthorized wireless network.
+   This artifact looks for all Wifi networks to which a host has
+   joined.  This can be useful in determining where a machine has
+   been, or if a user has joined an illegitimate or unauthorized
+   wireless network.
 
 type: CLIENT
 
@@ -25,10 +31,13 @@ precondition:
 
 sources:
   - query: |
-      LET WifiPlist = SELECT FullPath from glob(globs=WifiGlob)
-      LET KnownNetworks = SELECT get(member="KnownNetworks") as KN from plist(file=WifiPlist.FullPath)
+      LET WifiPlist = SELECT OSPath from glob(globs=WifiGlob)
+      LET KnownNetworksQuery = SELECT get(member="KnownNetworks") as KN
+         FROM plist(file=WifiPlist.OSPath)
+         WHERE KN
+
       LET EachNetwork = SELECT * from foreach(
-         row=KnownNetworks,
+         row=KnownNetworksQuery,
          query={
             SELECT _key AS Network, _value AS Value
             FROM items(item=KN)
@@ -44,4 +53,5 @@ sources:
              Value AS _Data
       FROM EachNetwork
 
-```
+</code></pre>
+

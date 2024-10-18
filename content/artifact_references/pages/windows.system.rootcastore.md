@@ -7,13 +7,13 @@ tags: [Client Artifact]
 Enumerate the root certificates in the Windows Root store.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.System.RootCAStore
 description: |
    Enumerate the root certificates in the Windows Root store.
 
 reference:
-   - "ATT&CK: T1553"
+   - "ATT&amp;CK: T1553"
    - https://attack.mitre.org/techniques/T1553/004/
 
 parameters:
@@ -32,11 +32,11 @@ sources:
 
     query: |
         LET profile = '''[
-        ["Record", "x=>x.Length + 12", [
+        ["Record", "x=&gt;x.Length + 12", [
           ["Type", 0, "uint32"],
           ["Length", 8, "uint32"],
           ["Data", 12, "String", {
-              length: "x=>x.Length",
+              length: "x=&gt;x.Length",
               term: "",
           }],
           ["UnicodeString", 12, "String", {
@@ -71,11 +71,12 @@ sources:
         // Glob for certificates in all the locations we know about.
         SELECT * FROM foreach(row=CertificateRootStoreGlobs,
         query={
-          SELECT FullPath AS _RegistryValue, ModTime,
+          SELECT OSPath AS _RegistryValue, ModTime,
                GetName(CertData=Data.value)[0].Name AS Name,
                GetFinger(CertData=Data.value)[0].FingerPrint AS FingerPrint,
                GetCert(CertData=Data.value)[0].Cert AS Certificate
           FROM glob(globs=Glob, accessor=Accessor)
         })
 
-```
+</code></pre>
+

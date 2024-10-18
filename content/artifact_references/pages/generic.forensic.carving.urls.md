@@ -8,7 +8,7 @@ Carve URLs from files located in a glob. Note that we do not parse
 any files - we simply carve anything that looks like a URL.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Generic.Forensic.Carving.URLs
 description: |
   Carve URLs from files located in a glob. Note that we do not parse
@@ -31,15 +31,16 @@ parameters:
 
 sources:
   - query: |
-        LET matching = SELECT FullPath FROM glob(
+        LET matching = SELECT OSPath FROM glob(
             globs=parse_json_array(data=UrlGlob))
 
-        SELECT FullPath, URL FROM foreach(
+        SELECT OSPath, URL FROM foreach(
           row=matching,
           query={
-            SELECT FullPath,
-                   URL FROM parse_records_with_regex(file=FullPath,
-               regex="(?P<URL>https?:\\/\\/[\\w\\.-]+[\\/\\w \\.-]*)")
+            SELECT OSPath,
+                   URL FROM parse_records_with_regex(file=OSPath,
+               regex="(?P&lt;URL&gt;https?:\\/\\/[\\w\\.-]+[\\/\\w \\.-]*)")
           })
 
-```
+</code></pre>
+

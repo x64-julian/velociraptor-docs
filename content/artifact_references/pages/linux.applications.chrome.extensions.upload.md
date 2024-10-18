@@ -10,7 +10,7 @@ We dont bother actually parsing anything here, we just grab all the
 extension files in user's home directory.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Linux.Applications.Chrome.Extensions.Upload
 description: |
   Upload all users chrome extension.
@@ -32,9 +32,10 @@ sources:
              SELECT Uid, User, Homedir from Artifact.Linux.Sys.Users()
           },
           query={
-             SELECT FullPath, Mtime, Ctime, User, Uid,
-                    upload(file=FullPath) as Upload
+             SELECT OSPath, Mtime, Ctime, User, Uid,
+                    upload(file=OSPath) as Upload
              FROM glob(globs=extensionGlobs, root=Homedir)
           })
 
-```
+</code></pre>
+

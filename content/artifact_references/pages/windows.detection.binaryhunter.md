@@ -18,7 +18,7 @@ For most performant searches leverage path, size and and date filters. By defaul
 the artifact leverages the 'auto' data accessor but can also be changed as desired.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Detection.BinaryHunter
 author: "Matt Green - @mgreen27"
 description: |
@@ -87,13 +87,18 @@ parameters:
   - name: SHA256List
     description: SHA256 hash list to hunt for. New SHA256 hash on each line
     default:
+  - name: DISABLE_DANGEROUS_API_CALLS
+    type: bool
+    description: |
+      Enable this to disable potentially flakey APIs which may cause
+      crashes.
 
 sources:
   - query: |
       -- setup hash lists if needed
-      LET MD5Array <= split(sep='\\s+',string=MD5List)
-      LET SHA1Array <=  split(sep='\\s+',string=SHA1List)
-      LET SHA256Array <= split(sep='\\s+',string=SHA256List)
+      LET MD5Array &lt;= split(sep='\\s+',string=MD5List)
+      LET SHA1Array &lt;=  split(sep='\\s+',string=SHA1List)
+      LET SHA256Array &lt;= split(sep='\\s+',string=SHA256List)
 
       -- firstly find files in scope with performance
       LET find_files = SELECT *,
@@ -103,31 +108,31 @@ sources:
                 SELECT OSPath, Name, Size,Mtime,Atime,Ctime,Btime
                 FROM glob(globs=TargetGlob,accessor=Accessor)
                 WHERE NOT IsDir AND NOT IsLink
-                    AND Size > SizeMin AND Size < SizeMax
-                    AND ( Mtime < DateBefore OR Ctime < DateBefore OR Btime < DateBefore )
-                    AND ( Mtime > DateAfter OR Ctime > DateAfter OR Btime > DateAfter )
+                    AND Size &gt; SizeMin AND Size &lt; SizeMax
+                    AND ( Mtime &lt; DateBefore OR Ctime &lt; DateBefore OR Btime &lt; DateBefore )
+                    AND ( Mtime &gt; DateAfter OR Ctime &gt; DateAfter OR Btime &gt; DateAfter )
             },
             else={ SELECT * FROM  if(condition=DateBefore,
                 then={
                     SELECT OSPath, Name, Size,Mtime,Atime,Ctime,Btime
                     FROM glob(globs=OSPath,accessor=Accessor)
                     WHERE NOT IsDir AND NOT IsLink
-                        AND Size > SizeMin AND Size < SizeMax
-                        AND ( Mtime < DateBefore OR Ctime < DateBefore OR Btime < DateBefore )
+                        AND Size &gt; SizeMin AND Size &lt; SizeMax
+                        AND ( Mtime &lt; DateBefore OR Ctime &lt; DateBefore OR Btime &lt; DateBefore )
                 },
                 else={ SELECT * FROM  if(condition=DateAfter,
                 then={
                     SELECT OSPath, Name, Size,Mtime,Atime,Ctime,Btime
                     FROM glob(globs=TargetGlob,accessor=Accessor)
                     WHERE NOT IsDir AND NOT IsLink
-                        AND Size > SizeMin AND Size < SizeMax
-                        AND ( Mtime > DateAfter OR Ctime > DateAfter OR Btime > DateAfter )
+                        AND Size &gt; SizeMin AND Size &lt; SizeMax
+                        AND ( Mtime &gt; DateAfter OR Ctime &gt; DateAfter OR Btime &gt; DateAfter )
                 },
                 else={
                     SELECT OSPath, Name, Size,Mtime,Atime,Ctime,Btime
                     FROM glob(globs=TargetGlob,accessor=Accessor)
                     WHERE NOT IsDir AND NOT IsLink
-                        AND Size > SizeMin AND Size < SizeMax
+                        AND Size &gt; SizeMin AND Size &lt; SizeMax
                 })})})
         WHERE _Header = 'MZ'
             AND if(condition= UnexpectedExtension,
@@ -137,7 +142,7 @@ sources:
 
       -- parse PE attributes and run final filters
       SELECT
-        dict(FullPath=OSPath,Name=Name,Size=Size,
+        dict(OSPath=OSPath,Name=Name,Size=Size,
             Timestamps=dict(Mtime=Mtime,Atime=Atime,Ctime=Ctime,Btime=Btime)
                 ) as File,
         authenticode(filename=OSPath) as Authenticode,
@@ -166,4 +171,5 @@ sources:
                         then= Hash.SHA256 in SHA256Array)
             ), else = True )
 
-```
+</code></pre>
+

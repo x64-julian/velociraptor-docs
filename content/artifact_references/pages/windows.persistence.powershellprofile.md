@@ -17,7 +17,7 @@ configured profiles. The user can also targert and exclude specific content
 with relevant regex filters
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Persistence.PowershellProfile
 author: Matt Green - @mgreen27
 description: |
@@ -66,13 +66,13 @@ sources:
         WHERE Directory
 
         -- Search for both Powershell System and User profiles.
-        SELECT FullPath, Size,
-            read_file(filename=FullPath) as Content,
+        SELECT OSPath, Size,
+            read_file(filename=OSPath) as Content,
             dict(   Mtime=Mtime,
                     Atime=Atime,
                     Ctime=Ctime,
                     Btime=Btime ) as Timestamps,
-            hash(path=FullPath) as Hash
+            hash(path=OSPath) as Hash
         FROM glob(globs=UserTargets.ProfileGlob + PSHomeProfileGlob)
         WHERE
             Content =~ SearchStrings
@@ -80,4 +80,5 @@ sources:
                         then= Content=~StringWhiteList,
                         else= False)
 
-```
+</code></pre>
+

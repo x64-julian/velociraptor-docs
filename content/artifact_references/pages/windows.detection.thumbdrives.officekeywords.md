@@ -17,7 +17,7 @@ We exclude very large removable drives since they might have too
 many files.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Detection.Thumbdrives.OfficeKeywords
 description: |
   Users inserting Thumb drives or other Removable drive pose a
@@ -57,11 +57,12 @@ sources:
         SELECT * FROM foreach(
           row = {
             SELECT * FROM Artifact.Windows.Detection.Thumbdrives.List()
-            WHERE FullPath =~ officeExtensions
+            WHERE OSPath =~ officeExtensions
           },
           query = {
             SELECT * FROM Artifact.Generic.Applications.Office.Keywords(
-              yaraRule=yaraRule, searchGlob=FullPath, documentGlobs="")
+              yaraRule=yaraRule, searchGlob=OSPath, documentGlobs="")
           })
 
-```
+</code></pre>
+

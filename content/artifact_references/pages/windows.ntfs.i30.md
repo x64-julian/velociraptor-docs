@@ -10,7 +10,7 @@ This can reveal previously deleted files. Optionally upload the I30
 stream to the server as well.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.NTFS.I30
 description: |
   Carve the $I30 index stream for a directory.
@@ -36,8 +36,8 @@ sources:
       SELECT * FROM info() where OS = 'windows' AND AlsoUpload
 
     query: |
-       LET inodes = SELECT FullPath, Data.mft AS MFT,
-             parse_ntfs(device=FullPath, inode=Data.mft) AS MFTInfo
+       LET inodes = SELECT OSPath, Data.mft AS MFT,
+             parse_ntfs(device=OSPath, inode=Data.mft) AS MFTInfo
        FROM glob(globs=DirectoryGlobs, accessor="ntfs")
        WHERE IsDir
 
@@ -50,10 +50,10 @@ sources:
                   _value.Inode AS Inode,
                   _value.Size AS Size,
                   _value.Name AS Name,
-                  _value.FullPath AS FullPath,
+                  _value.OSPath AS OSPath,
                   upload(accessor="mft",
                          file=MFTInfo.Device + _value.Inode,
-                         name=pathspec(Path=_value.FullPath + "/" + _value.Inode)) AS IndexUpload
+                         name=pathspec(Path=_value.OSPath + "/" + _value.Inode)) AS IndexUpload
            FROM scope()
            WHERE Type =~ "INDEX_"
        })
@@ -65,18 +65,19 @@ sources:
       SELECT * FROM info() where OS = 'windows'
 
     query: |
-       LET inodes = SELECT FullPath, Data.mft AS MFT,
-             parse_ntfs(device=FullPath, inode=Data.mft) AS MFTInfo
+       LET inodes = SELECT OSPath, Data.mft AS MFT,
+             parse_ntfs(device=OSPath, inode=Data.mft) AS MFTInfo
        FROM glob(globs=DirectoryGlobs, accessor="ntfs")
        WHERE IsDir
 
        SELECT * FROM foreach(
          row=inodes,
          query={
-            SELECT FullPath, Name, NameType, Size, AllocatedSize,
+            SELECT OSPath, Name, NameType, Size, AllocatedSize,
                    IsSlack, SlackOffset, Mtime, Atime, Ctime, Btime, MFTId
             FROM parse_ntfs_i30(device=MFTInfo.Device, inode=MFT)
             WHERE IsSlack = true or NOT SlackOnly
        })
 
-```
+</code></pre>
+

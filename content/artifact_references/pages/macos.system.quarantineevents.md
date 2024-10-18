@@ -9,7 +9,7 @@ This artifact parses the QuarantineEventsV2 database, which provides
 information on when a file was downloaded from the internet.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: MacOS.System.QuarantineEvents
 description: |
 
@@ -29,11 +29,11 @@ precondition:
 
 sources:
   - query: |
-      LET QList = SELECT FullPath
+      LET QList = SELECT OSPath
         FROM glob(globs=QuarantineGlob)
 
       LET QEvents = SELECT *
-        FROM sqlite(file=FullPath, query="SELECT * from LSQuarantineEvent")
+        FROM sqlite(file=OSPath, query="SELECT * from LSQuarantineEvent")
 
       // Add delta (978307200 seconds between Cocoa timestamp
       // (2020,1,1) and epoch timestamp (1970,1,1)) to provided Cocoa
@@ -48,7 +48,7 @@ sources:
                   LSQuarantineOriginURLString AS Origin,
                   LSQuarantineAgentName AS AgentName,
                   LSQuarantineAgentBundleIdentifier AS AgentBundle,
-                  split(string=FullPath, sep='/')[2] AS User,
+                  split(string=OSPath, sep='/')[2] AS User,
                   LSQuarantineEventIdentifier AS EventUUID
                  FROM scope()
               }
@@ -56,4 +56,5 @@ sources:
 
       SELECT * FROM foreach(row=QList, query=QEventsDetails)
 
-```
+</code></pre>
+

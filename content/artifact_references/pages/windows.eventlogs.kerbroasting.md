@@ -29,7 +29,7 @@ Note: There are potential false positives so whitelist normal source IPs and
 manage risk of insecure ticket generation.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.EventLogs.Kerbroasting
 author: Matt Green - @mgreen27
 
@@ -65,19 +65,23 @@ reference:
 parameters:
   - name: EvtxGlob
     default: '%SystemRoot%\System32\winevt\logs\Security.evtx'
-  - name: SearchVSS
-    description: "Add VSS into query."
-    type: bool
+  - name: VSSAnalysisAge
+    type: int
+    default: 0
+    description: |
+      If larger than zero we analyze VSS within this many days
+      ago. (e.g 7 will analyze all VSS within the last week).  Note
+      that when using VSS analysis we have to use the ntfs accessor
+      for everything which will be much slower.
 
 sources:
   - query: |
-      -- expand provided glob into a list of paths on the file system (fs)
-      LET fspaths <= SELECT FullPath
-        FROM glob(globs=expand(path=EvtxGlob))
+      LET VSS_MAX_AGE_DAYS &lt;= VSSAnalysisAge
+      LET Accessor = if(condition=VSSAnalysisAge &gt; 0, then="ntfs_vss", else="auto")
 
-      -- function returning list of VSS paths corresponding to path
-      LET vsspaths(path) = SELECT FullPath
-        FROM Artifact.Windows.Search.VSS(SearchFilesGlob=path)
+      -- expand provided glob into a list of paths on the file system (fs)
+      LET fspaths = SELECT OSPath
+        FROM glob(globs=expand(path=EvtxGlob))
 
       -- function returning IOC hits
       LET evtxsearch(PathList) = SELECT * FROM foreach(
@@ -97,8 +101,8 @@ sources:
                     EventData.TransmittedServices as TransmittedServices,
                     EventData.IpAddress as IpAddress,
                     EventData.IpPort as IpPort,
-                    FullPath
-                FROM parse_evtx(filename=FullPath)
+                    OSPath
+                FROM parse_evtx(filename=OSPath, accessor=Accessor)
                 WHERE
                     System.EventID.Value = 4769
                     AND EventData.TicketEncryptionType = 23
@@ -108,23 +112,7 @@ sources:
           })
 
 
-      -- include VSS in calculation and deduplicate with GROUP BY by file
-      LET include_vss = SELECT * FROM foreach(row=fspaths,
-            query={
-                SELECT *
-                FROM evtxsearch(PathList={
-                        SELECT FullPath FROM vsspaths(path=FullPath)
-                    })
-                GROUP BY EventRecordID,Channel
-              })
+        SELECT * FROM evtxsearch(PathList=fspaths)
 
-      -- exclude VSS in EvtxHunt`
-      LET exclude_vss = SELECT *
-        FROM evtxsearch(PathList={SELECT FullPath FROM fspaths})
+</code></pre>
 
-      -- return rows
-      SELECT * FROM if(condition=SearchVSS,
-        then=include_vss,
-        else=exclude_vss)
-
-```

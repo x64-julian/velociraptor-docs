@@ -26,7 +26,7 @@ NOTE: This artifact is still experimental - please provide feedback
 on our issue board.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Server.Utils.ImportCollection
 description: |
   The Velociraptor offline collector is an automated, preconfigured
@@ -65,16 +65,31 @@ parameters:
 
 sources:
   - query: |
-      LET result = SELECT import_collection(
+      LET result &lt;= SELECT import_collection(
                client_id=ClientId, hostname=Hostname,
                filename=Path) AS Import
-        FROM scope()
+      FROM scope()
 
-      SELECT Import.client_id AS ClientId, Import.session_id AS FlowId,
-             Import.total_collected_rows AS TotalRows,
-             Import.total_uploaded_files AS UploadedFiles,
-             Import.total_uploaded_bytes AS UploadedBytes,
-             Import.artifacts_with_results AS Artifacts
-      FROM result
+      SELECT * FROM switch(a={
+         SELECT Import.client_id AS ClientId, Import.session_id AS FlowId,
+                Import.total_collected_rows AS TotalRows,
+                Import.total_uploaded_files AS UploadedFiles,
+                Import.total_uploaded_bytes AS UploadedBytes,
+                Import.artifacts_with_results AS Artifacts
+        FROM result
+        WHERE FlowId
 
-```
+        -- Hunt import
+      }, b={
+         SELECT Import.hunt_id AS HuntId,
+                timestamp(epoch=Import.create_time) AS CreateTime,
+                Import.stats.total_clients_scheduled AS TotalClients,
+                Import.artifacts AS Artifacts,
+                Import.creator AS Creator,
+                Import AS _Hunt
+        FROM result
+        WHERE HuntId
+      })
+
+</code></pre>
+

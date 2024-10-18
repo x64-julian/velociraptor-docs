@@ -9,7 +9,7 @@ Uses Sysinternals autoruns to scan the host.
 Note this requires syncing the sysinternals binary from the host.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Sysinternals.Autoruns
 description: |
   Uses Sysinternals autoruns to scan the host.
@@ -65,6 +65,9 @@ parameters:
     type: bool
   - name: Winlogon entries
     type: bool
+  - name: Verify digital signatures
+    type: bool
+    default: Y
   - name: ToolInfo
     type: hidden
     description: Override Tool information.
@@ -92,21 +95,30 @@ sources:
       w,Winlogon entries
       '''
 
-      -- The options actually selected
-      LET options = SELECT Option FROM parse_csv(accessor="data", filename=Flags)
+      LET Options = '''Option,Name
+      -s,Verify digital signatures
+      '''
+
+      -- The flags actually selected
+      LET flags = SELECT Option FROM parse_csv(accessor="data", filename=Flags)
         WHERE get(field=Name)
 
-      LET os_info <= SELECT Architecture FROM info()
+      -- The options actually selected
+      LET options = SELECT Option FROM parse_csv(accessor="data", filename=Options)
+        WHERE get(field=Name)
+
+      LET os_info &lt;= SELECT Architecture FROM info()
 
       // Get the path to the binary.
-      LET bin <= SELECT * FROM Artifact.Generic.Utils.FetchBinary(
+      LET bin &lt;= SELECT * FROM Artifact.Generic.Utils.FetchBinary(
               ToolName= "Autorun_" + os_info[0].Architecture,
               ToolInfo=ToolInfo)
 
       // Call the binary and return all its output in a single row.
-      LET output = SELECT * FROM execve(argv=[bin[0].FullPath,
+      LET output = SELECT * FROM execve(argv=[bin[0].OSPath,
             '-nobanner', '-accepteula', '-t', '-a',
-            join(array=options.Option, sep=""),
+            join(array=flags.Option, sep=""),
+            join(array=options.Option, sep=" "),
             '-c', -- CSV output
             '-h', -- Also calculate hashes
             '*'   -- All user profiles.
@@ -123,4 +135,5 @@ sources:
           })
       })
 
-```
+</code></pre>
+

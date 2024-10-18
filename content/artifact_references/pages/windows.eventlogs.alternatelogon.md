@@ -9,7 +9,7 @@ destination Current logged-on User Name Alternate User Name
 Destination Host Name/IP Process Name
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.EventLogs.AlternateLogon
 description: |
   Logon specifying alternate credentials - if NLA enabled on
@@ -27,16 +27,19 @@ parameters:
 
 sources:
   - query: |
-      SELECT EventData.IpAddress AS IpAddress,
-               EventData.IpPort AS Port,
-               EventData.ProcessName AS ProcessName,
-               EventData.SubjectUserSid AS SubjectUserSid,
-               EventData.SubjectUserName AS SubjectUserName,
-               EventData.TargetUserName AS TargetUserName,
-               EventData.TargetServerName AS TargetServerName,
-               System.TimeCreated.SystemTime AS LogonTime
+      SELECT
+        timestamp(epoch=System.TimeCreated.SystemTime) AS EventTime,
+        EventData.IpAddress AS IpAddress,
+        EventData.IpPort AS Port,
+        EventData.ProcessName AS ProcessName,
+        EventData.SubjectUserSid AS SubjectUserSid,
+        EventData.SubjectUserName AS SubjectUserName,
+        EventData.TargetUserName AS TargetUserName,
+        EventData.TargetServerName AS TargetServerName,
+        System.TimeCreated.SystemTime AS LogonTime
       FROM parse_evtx(filename=securityLogFile)
       WHERE System.EventID.Value = 4648
         AND EventData
 
-```
+</code></pre>
+

@@ -5,44 +5,53 @@ tags: [Client Artifact]
 ---
 
 An internal artifact that defines some tool
-depenencies. Velociraptor releases for offline collector
+dependencies. Velociraptor releases for offline collector
+
+NOTE: Do not modify - this artifact is generated during build in magefile.go
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Server.Internal.ToolDependencies
 description: |
   An internal artifact that defines some tool
-  depenencies. Velociraptor releases for offline collector
+  dependencies. Velociraptor releases for offline collector
+
+  NOTE: Do not modify - this artifact is generated during build in magefile.go
 
 tools:
   - name: VelociraptorWindows
-    github_project: Velocidex/velociraptor
-    github_asset_regex: windows-amd64.exe
+    url: https://github.com/Velocidex/velociraptor/releases/download/v0.73/velociraptor-v0.73.0-rc1-windows-amd64.exe
     serve_locally: true
+    version: 0.73.0-rc1
 
   - name: VelociraptorWindows_x86
-    github_project: Velocidex/velociraptor
-    github_asset_regex: windows-386.exe
+    url: https://github.com/Velocidex/velociraptor/releases/download/v0.73/velociraptor-v0.73.0-rc1-windows-386.exe
     serve_locally: true
+    version: 0.73.0-rc1
 
   - name: VelociraptorLinux
-    github_project: Velocidex/velociraptor
-    github_asset_regex: linux-amd64-musl
+    url: https://github.com/Velocidex/velociraptor/releases/download/v0.73/velociraptor-v0.73.0-rc1-linux-amd64-musl
     serve_locally: true
+    version: 0.73.0-rc1
 
-  - name: VelociraptorDarwin
-    github_project: Velocidex/velociraptor
-    github_asset_regex: darwin-amd64
+  # On MacOS we can not embed the config in the binary so we use a
+  # shell script stub instead. See
+  # https://github.com/Velocidex/velociraptor/issues/2898
+
+  # A Generic collector to be used with the --embedded_config flag.
+  - name: VelociraptorCollector
+    url: https://github.com/Velocidex/velociraptor/releases/download/v0.73/velociraptor-collector
     serve_locally: true
 
   - name: VelociraptorWindowsMSI
-    github_project: Velocidex/velociraptor
-    github_asset_regex: windows-amd64.msi
+    url: https://github.com/Velocidex/velociraptor/releases/download/v0.73/velociraptor-v0.73.0-rc1-windows-amd64.msi
     serve_locally: true
+    version: 0.73.0-rc1
 
   - name: VelociraptorWindows_x86MSI
-    github_project: Velocidex/velociraptor
-    github_asset_regex: windows-386.msi
+    url: https://github.com/Velocidex/velociraptor/releases/download/v0.73/velociraptor-v0.73.0-rc1-windows-386.msi
     serve_locally: true
+    version: 0.73.0-rc1
 
-```
+</code></pre>
+

@@ -14,7 +14,7 @@ in place of the `auth_value`, `auth_reason`, and `auth_version`
 columns for Catalina and prior.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: MacOS.System.TCC
 description: |
    This artifact provides details around the TCC (Transparency,
@@ -39,11 +39,11 @@ precondition:
 
 sources:
   - query: |
-      LET TCCList = SELECT FullPath
+      LET TCCList = SELECT OSPath
        FROM glob(globs=split(string=TCCGlob, sep=","))
 
       LET TCCAccess = SELECT *
-       FROM sqlite(file=FullPath, query="SELECT * from access")
+       FROM sqlite(file=OSPath, query="SELECT * from access")
 
       LET TCCAccessDetails =
           SELECT * FROM foreach(
@@ -54,7 +54,7 @@ sources:
                     client AS Client,
                     if(condition= client_type= 0, then="Console", else=if(condition= client_type= 1, then="Service/Script", else="Other")) AS ClientType,
                     if(condition= auth_value= 2, then="Yes", else="No") AS Allowed,
-                    if(condition= FullPath =~ "Users", then=path_split(path=FullPath)[-5], else="System") AS User,
+                    if(condition= OSPath =~ "Users", then=path_split(path=OSPath)[-5], else="System") AS User,
                     auth_reason AS _AuthReason,
                     auth_version AS _AuthVersion,
                     csreq AS _CSReq,
@@ -63,10 +63,11 @@ sources:
                     indirect_object_identifier as IndirectObjectIdentifier,
                     indirect_object_code_identity as _IndirectObjectCodeIdentity,
                     flags as _Flags,
-                    FullPath AS _FullPath
+                    OSPath AS _OSPath
                  FROM scope()
               }
           )
       SELECT * FROM foreach(row=TCCList, query=TCCAccessDetails)
 
-```
+</code></pre>
+

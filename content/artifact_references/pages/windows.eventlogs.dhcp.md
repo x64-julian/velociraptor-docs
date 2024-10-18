@@ -28,7 +28,7 @@ On windows, there are two types of logs:
      by default. If it is available we can rely on the information.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.EventLogs.DHCP
 description: |
 
@@ -87,7 +87,7 @@ sources:
                      ip(netaddr4_le=EventData.Address1) AS ClientIP,
                      ip(netaddr4_le=EventData.Address2) AS DHCPServer,
                      "Lease Rejected" AS Type
-              FROM parse_evtx(filename=FullPath, accessor=accessor)
+              FROM parse_evtx(filename=OSPath, accessor=accessor)
               WHERE System.EventID.Value = 1002
            })
 
@@ -104,7 +104,7 @@ sources:
                      ip(netaddr4_le=EventData.Address1) AS ClientIP,
                      ip(netaddr4_le=EventData.Address2) AS DHCPServer,
                      "Lease Assigned" AS Type
-              FROM parse_evtx(filename=FullPath, accessor=accessor)
+              FROM parse_evtx(filename=OSPath, accessor=accessor)
               WHERE System.EventID.Value = 60000
            })
 
@@ -158,4 +158,5 @@ reports:
 
       {{ Query "SELECT _Time * 1000, ClientIP FROM source(source='RejectedDHCP')" | Timeline }}
 
-```
+</code></pre>
+

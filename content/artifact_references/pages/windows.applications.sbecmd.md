@@ -26,7 +26,7 @@ Windows.Forensics.Shellbags artifact.
 MITRE ATT&CK ID: TA0009 - Collection
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Applications.SBECmd
 description: |
     Execute Eric Zimmerman's SBECmd and return output for analysis.
@@ -48,7 +48,7 @@ description: |
     NOTE: Velociraptor can now parse Shellbags natively with the
     Windows.Forensics.Shellbags artifact.
 
-    MITRE ATT&CK ID: TA0009 - Collection
+    MITRE ATT&amp;CK ID: TA0009 - Collection
 
 author: Eduardo Mattos - @eduardfir
 
@@ -80,11 +80,11 @@ parameters:
 sources:
   - query: |
       -- get context on target binary
-      LET payload <= SELECT * FROM Artifact.Generic.Utils.FetchBinary(
+      LET payload &lt;= SELECT * FROM Artifact.Generic.Utils.FetchBinary(
                     ToolName="SBECmd", IsExecutable=TRUE)
 
       -- build tempfolder for output
-      LET tempfolder <= tempdir(remove_last=TRUE)
+      LET tempfolder &lt;= tempdir(remove_last=TRUE)
 
       -- get users with profiles
       LET UserProfiles = SELECT
@@ -94,11 +94,11 @@ sources:
       WHERE Name =~ userRegex and HomeDirectory =~ "Users"
 
       -- execute payload
-      LET deploy <= SELECT * FROM foreach(row=UserProfiles,
+      LET deploy &lt;= SELECT * FROM foreach(row=UserProfiles,
                     query={
                         SELECT *, Name
                         FROM execve(argv=[
-                            payload.FullPath[0],
+                            payload.OSPath[0],
                             "-d", HomeDirectory,
                             "--csv", tempfolder + "\\" + Name,
                             "--dedupe"])
@@ -118,8 +118,8 @@ sources:
          SELECT * FROM if(
            condition=UploadFiles,
            then={
-             SELECT Name, upload(file=FullPath,
-                                 name=relpath(base=tempfile, path=FullPath)) as FileDetails
+             SELECT Name, upload(file=OSPath,
+                                 name=relpath(base=tempfile, path=OSPath)) as FileDetails
              FROM glob(globs="/**", root=tempfolder)
            })
       },
@@ -128,9 +128,10 @@ sources:
            condition=RemovePayload,
            then={
              SELECT * FROM execve(argv=['powershell','Remove-Item',
-                                             payload.FullPath[0],'-Force' ])
+                                             payload.OSPath[0],'-Force' ])
            })
       })
       WHERE Stdout =~ "SBECmd"
 
-```
+</code></pre>
+

@@ -17,7 +17,7 @@ This artifact uses the EWT provider:
 Microsoft-Windows-WMI-Activity           {1418EF04-B0B4-4623-BF7E-D74AB47BBDAA}
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.ETW.WMIProcessCreate
 description: |
   This artifact the endpoints for process creation through WMI
@@ -40,7 +40,9 @@ sources:
          System.ID AS ID,
          System.TimeStamp AS Timestamp,
          get(member="EventData") AS EventData
-      FROM watch_etw(guid="{1418EF04-B0B4-4623-BF7E-D74AB47BBDAA}")
+      FROM watch_etw(
+        description="Microsoft-Windows-WMI-Activity",
+        guid="{1418EF04-B0B4-4623-BF7E-D74AB47BBDAA}")
       WHERE ID = 23
 
       SELECT ID, Timestamp, EventData.ClientMachine AS Hostname,
@@ -56,4 +58,5 @@ sources:
              EventData.User AS User
       FROM hits
 
-```
+</code></pre>
+

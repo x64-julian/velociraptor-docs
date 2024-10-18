@@ -6,7 +6,7 @@ tags: [Client Artifact]
 
 Chocolatey packages installed in a system.
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Applications.ChocolateyPackages
 description: Chocolatey packages installed in a system.
 parameters:
@@ -24,8 +24,8 @@ sources:
              -- Otherwise just use the environment.
              else=environ(var='ChocolateyInstall')) + '/lib/*/*.nuspec'
 
-      LET files = SELECT FullPath,
-              parse_xml(file=FullPath) AS Metadata
+      LET files = SELECT OSPath,
+              parse_xml(file=OSPath) AS Metadata
               -- Use the ChocolateyInstall parameter if it is set.
 
           FROM glob(globs=SearchGlob)
@@ -35,7 +35,7 @@ sources:
                      then=ChocolateyInstall,
                      else=environ(var="ChocolateyInstall")),
         then={
-            SELECT FullPath,
+            SELECT OSPath,
                    Metadata.package.metadata.id as Name,
                    Metadata.package.metadata.version as Version,
                    Metadata.package.metadata.summary as Summary,
@@ -44,4 +44,5 @@ sources:
             FROM files
         })
 
-```
+</code></pre>
+

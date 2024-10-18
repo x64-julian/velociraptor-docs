@@ -17,7 +17,7 @@ NOTE: Do not modify the BasicInformation source since it is used to
 interrogate the clients.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Generic.Client.Info
 description: |
   Collect basic information about the client.
@@ -38,8 +38,7 @@ sources:
       This source is used internally to populate agent info. Do not
       modify or remove this query.
     query: |
-        LET Interfaces = SELECT format(format='%02x:%02x:%02x:%02x:%02x:%02x',
-            args=HardwareAddr) AS MAC
+        LET Interfaces = SELECT HardwareAddrString AS MAC
         FROM interfaces()
         WHERE HardwareAddr
 
@@ -54,11 +53,27 @@ sources:
                Interfaces.MAC AS MACAddresses
         FROM info()
 
+  - name: DetailedInfo
+    query: |
+      LET Info = SELECT * FROM info()
+      SELECT _key AS Param, _value AS Value FROM items(item=Info[0])
+
+  - name: LinuxInfo
+    description: Linux specific information about the host
+    precondition: SELECT OS From info() where OS = 'linux'
+    query: |
+      SELECT if(condition=version(function='sysinfo') != NULL, then=sysinfo()) AS `Computer Info`,
+      { SELECT Name, HardwareAddrString AS MACAddress,
+               Up, PointToPoint,
+               AddrsString AS IPAddresses
+        FROM interfaces() WHERE HardwareAddr} AS `Network Info`
+      FROM scope()
+
   - name: WindowsInfo
     description: Windows specific information about the host
     precondition: SELECT OS From info() where OS = 'windows'
     query: |
-      LET DomainLookup <= dict(
+      LET DomainLookup &lt;= dict(
          `0`='Standalone Workstation',
          `1`='Member Workstation',
          `2`='Standalone Server',
@@ -140,18 +155,43 @@ reports:
            FROM source(artifact="Generic.Client.Stats",
                        client_id=ClientId,
                        start_time=now() - 86400)
-           WHERE CPUPercent >= 0
+           WHERE CPUPercent &gt;= 0
          })
       {{ end }}
 
-      <div>
+      {{ define "computerinfo" }}
+      LET X &lt;= SELECT *
+        FROM source(artifact='Generic.Client.Info/LinuxInfo')
+        LIMIT 1
+
+      SELECT humanize(bytes=TotalPhysicalMemory) AS  TotalPhysicalMemory,
+             humanize(bytes=TotalFreeMemory) AS  TotalFreeMemory,
+             humanize(bytes=TotalSharedMemory) AS  TotalSharedMemory,
+             humanize(bytes=TotalSwap) AS  TotalSwap,
+             humanize(bytes=FreeSwap) AS  FreeSwap
+      FROM foreach(row=X[0].`Computer Info`)
+      {{ end }}
+
+      &lt;div&gt;
       {{ Query "resources" | LineChart "xaxis_mode" "time" "RSS.yaxis" 2 }}
-      </div>
+      &lt;/div&gt;
 
       {{ $windows_info := Query "SELECT * FROM source(source='WindowsInfo')" }}
-      {{ if $windows_info }}
+      {{ if $windows_info | Expand }}
       # Windows agent information
         {{ $windows_info | Table }}
+      {{ end }}
+
+      {{ $linux_info := Query "LET X &lt;= SELECT * FROM source(artifact='Generic.Client.Info/LinuxInfo') LIMIT 1 SELECT * FROM X" }}
+      {{ if Query "SELECT * FROM source(artifact='Generic.Client.Info/LinuxInfo')" | Expand }}
+      # Linux agent information
+
+      ### Network Info
+        {{ Query "SELECT * FROM foreach(row=X[0].`Network Info`)" | Table }}
+
+      ### Computer Info
+        {{ Query "computerinfo" | Table }}
+
       {{ end }}
 
       # Active Users
@@ -164,4 +204,5 @@ column_types:
   - name: LastLogin
     type: timestamp
 
-```
+</code></pre>
+

@@ -18,7 +18,7 @@ Note that unfortunately Microsoft does not sign all their common
 binaries so many will not be signed (e.g. conhost.exe).
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.System.UntrustedBinaries
 description: |
   Windows runs a number of services and binaries as part of the
@@ -39,6 +39,11 @@ parameters:
     description: A regex to select running processes which we consider should be trusted.
     default: "lsass|svchost|conhost|taskmgr|winlogon|wmiprv|dwm|csrss|velociraptor"
     type: regex
+  - name: DISABLE_DANGEROUS_API_CALLS
+    type: bool
+    description: |
+      Enable this to disable potentially flakey APIs which may cause
+      crashes.
 
 sources:
   - precondition: |
@@ -57,4 +62,5 @@ sources:
                Authenticode.SubjectName as Subject,
                Authenticode.Trusted as Trusted from auth
 
-```
+</code></pre>
+

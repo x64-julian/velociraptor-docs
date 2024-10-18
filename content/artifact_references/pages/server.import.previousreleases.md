@@ -18,7 +18,7 @@ artifacts that came bundled with previous versions. These should be
 compatible with older clients.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Server.Import.PreviousReleases
 description: |
   When upgrading the Velociraptor server the built in artifacts may
@@ -44,20 +44,18 @@ parameters:
     description: |
       The Velociraptor Release to import.
     type: choices
-    default: v0.6.7
+    default: v0.7.1
     choices:
-      - v0.6.0
-      - v0.6.1
-      - v0.6.2
-      - v0.6.3
-      - v0.6.4
-      - v0.6.5
       - v0.6.6
       - v0.6.7
+      - v0.6.8
+      - v0.6.9
+      - v0.7.0
+      - v0.7.1
 
 sources:
   - query: |
-      LET Prefix <= regex_replace(source=VelociraptorRelease, re='\\.', replace="") + "."
+      LET Prefix &lt;= regex_replace(source=VelociraptorRelease, re='\\.', replace="") + "."
       LET ExchangeURL = "https://docs.velociraptor.app/release_artifacts/release_artifacts_" + VelociraptorRelease + ".zip"
 
       LET X = SELECT artifact_set(
@@ -87,4 +85,5 @@ sources:
                Definition.author AS Author
         FROM X
 
-```
+</code></pre>
+

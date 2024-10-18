@@ -15,7 +15,7 @@ analyses them to provide an overview of the commands executed and
 the user under which they will be run.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.System.TaskScheduler
 description: |
   The Windows task scheduler is a common mechanism that malware uses
@@ -33,32 +33,54 @@ parameters:
     default: c:/Windows/System32/Tasks/**
   - name: AlsoUpload
     type: bool
+    description: |
+      If set we also upload the task XML files.
+  - name: UploadCommands
+    type: bool
+    description: |
+      If set we attempt to upload the commands that are
+      mentioned in the scheduled tasks
 
 sources:
   - name: Analysis
     query: |
-      LET Uploads = SELECT Name, FullPath, if(
+      LET Uploads = SELECT Name, OSPath, if(
            condition=AlsoUpload='Y',
-           then=upload(file=FullPath)) as Upload
+           then=upload(file=OSPath)) as Upload, Mtime
         FROM glob(globs=TasksPath)
         WHERE NOT IsDir
 
       // Job files contain invalid XML which confuses the parser - we
       // use regex to remove the invalid tags.
-      LET parse_task = select FullPath, parse_xml(
+      LET parse_task = select OSPath, Mtime, parse_xml(
                accessor='data',
                file=regex_replace(
                     source=utf16(string=Data),
-                    re='<[?].+?>',
+                    re='&lt;[?].+?&gt;',
                     replace='')) AS XML
-        FROM read_file(filenames=FullPath)
+        FROM read_file(filenames=OSPath)
 
-      SELECT FullPath,
+      LET Results = SELECT OSPath, Mtime,
             XML.Task.Actions.Exec.Command as Command,
+            expand(path=XML.Task.Actions.Exec.Command)  AS ExpandedCommand,
             XML.Task.Actions.Exec.Arguments as Arguments,
             XML.Task.Actions.ComHandler.ClassId as ComHandler,
             XML.Task.Principals.Principal.UserId as UserId,
+            timestamp(epoch=XML.Task.Triggers.CalendarTrigger.StartBoundary) AS StartBoundary,
             XML as _XML
         FROM foreach(row=Uploads, query=parse_task)
 
-```
+      SELECT *,
+         authenticode(filename=ExpandedCommand) AS Authenticode,
+         if(condition=UploadCommands and ExpandedCommand,
+            then=upload(file=ExpandedCommand)) AS Upload
+      FROM Results
+
+column_types:
+- name: Upload
+  type: upload_preview
+- name: Authenticode
+  type: folded
+
+</code></pre>
+

@@ -1,4 +1,18 @@
 
+@font-face {
+    font-family: Excalifont;
+    src: url("https://docs.velociraptor.app/fonts/playpen-sans-v13-latin-500.woff2");
+}
+
+@font-face {
+    font-family: Nunito;
+    src: url("/fonts/playpen-sans-v13-latin-800.woff2");
+}
+
+@font-face {
+    font-family: Comic Shanns;
+    src: url("/fonts/SVBasicManual.woff2");
+}
 
 html body {
     color: var(--MAIN-TEXT-color) !important;
@@ -128,9 +142,6 @@ body.dark code.hljs {
     color: white;
 }
 
-#body img {
-    max-width: 50%;
-}
 
 footer.footline {
     border-top: 1px none;
@@ -716,3 +727,81 @@ details > summary:first-of-type {
     display: list-item;
     counter-increment: list-item 0;
     list-style: inside disclosure-closed;
+}
+
+#body-inner table {
+    margin: 30px;
+}
+
+#body-inner table tbody {
+    border-top-color: black;
+    border-bottom-color: black;
+    border-style: solid;
+    border-width: 3px;
+}
+
+.search_results table {
+    width: -webkit-fill-available;
+}
+
+#body-inner .search_box tbody {
+    border-style: none;
+}
+
+#body-inner .search_box .gsc-input table {
+    margin: 0;
+}
+
+td.hash {
+    font-family: mono;
+    font-size: small;
+}
+
+td.signature {
+    text-align: center;
+}
+
+.platform {
+    height: 32px;
+    display: flex;
+    padding-right: 10px;
+}
+
+
+.featherlight-content {
+    width: 90%;
+}
+
+.featherlight-content .figure {
+    max-width: none;
+}
+
+.featherlight-content svg {
+    max-height: 80vh;
+}
+
+figure div.figure {
+    cursor: pointer;
+    margin: 0 auto;
+    max-width: 600px;
+}
+
+figure div.figure svg,
+figure div.figure img {
+    width: 100%;
+
+    height: auto;
+}
+
+.featherlight .featherlight-content img {
+    margin: 0 auto !important;
+}
+
+.image-link {
+    padding-right: 20px;
+    color: var(--REFERENCE-value-color);
+}
+
+.image-link:hover {
+    color: var(--REFERENCE-value-color);
+}

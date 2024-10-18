@@ -27,7 +27,7 @@ Change the glob to /** if you would like to search the entire filesystem.
 Be aware, this is an expensive operation.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Linux.Ssh.PrivateKeys
 description: |
   SSH Private keys can be either encrypted or unencrypted. Unencrypted
@@ -67,6 +67,13 @@ parameters:
     default: "^/(proc|sys|run|snap)"
     type: regex
     description: If this regex matches the path of any directory we do not even descend inside of it.
+    
+  - name: LocalFilesystemOnly
+    default: Y
+    type: bool
+    description:  |
+      When set, we stay on local attached filesystems including loop, attached disk, cdrom, device mapper, and excluding proc, nfs etc.
+      When set, it can miss keys in some Linux distros. If not sure, or run accross multiple distros, it is recommended to not set it.
 
 sources:
   - query: |
@@ -78,23 +85,30 @@ sources:
         }],
         ["cipher_length", 15, "uint32b"],
         ["cipher", 19, "String", {
-            "length": "x=>x.cipher_length",
+            "length": "x=&gt;x.cipher_length",
         }]
       ]]]
       '''
 
       -- Device major numbers considered local. See Linux.Search.FileFinder
-      LET LocalDeviceMajor <= (NULL,
+      LET LocalDeviceMajor &lt;= (NULL,
           253, 7, 8, 9, 11, 65, 66, 67, 68, 69, 70,
           71, 128, 129, 130, 131, 132, 133, 134, 135, 202, 253, 254, 259)
 
-      // Only search local filesystems
-      LET RecursionCallback = "x=>x.Data.DevMajor IN LocalDeviceMajor"
+      -- By default set to 'True', to only search local filesystems.
+      LET RecursionCallback = if(
+       condition=LocalFilesystemOnly,
+         then=if(condition=ExcludePathRegex,
+                 then="x=&gt;x.Data.DevMajor IN LocalDeviceMajor AND NOT x.OSPath =~ ExcludePathRegex",
+                 else="x=&gt;x.Data.DevMajor IN LocalDeviceMajor"),
+         else=if(condition=ExcludePathRegex,
+                 then="x=&gt;NOT x.OSPath =~ ExcludePathRegex",
+                 else=""))
 
       LET _Hits = SELECT OSPath,
            read_file(filename=OSPath, length=20240) AS Data
         FROM glob(globs=KeyGlobs, recursion_callback=RecursionCallback)
-        WHERE Size < 20000
+        WHERE Size &lt; 20000
 
       LET Hits = SELECT OSPath, Data,
              base64decode(
@@ -165,4 +179,5 @@ sources:
           })
       })
 
-```
+</code></pre>
+

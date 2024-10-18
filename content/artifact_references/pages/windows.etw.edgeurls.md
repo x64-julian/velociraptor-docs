@@ -15,7 +15,7 @@ to filter the URLs a bit and/or target collection to a narrow label
 group.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.ETW.EdgeURLs
 description: |
   This client event artifact collects all URLs accessed by the Edge browser.
@@ -38,7 +38,7 @@ parameters:
 
 sources:
   - query: |
-      LET m <= memoize(key="Pid", period=30, query={
+      LET m &lt;= memoize(key="Pid", period=30, query={
           SELECT Pid, Exe, Username FROM pslist()
       })
 
@@ -46,7 +46,10 @@ sources:
              System.TimeStamp AS Timestamp,
              get(item=m, field=System.ProcessID) AS ProcInfo,
              get(member="EventData.URL") AS URL
-      FROM watch_etw(guid="{245F975D-909D-49ED-B8F9-9A75691D6B6B}")
+      FROM watch_etw(
+        description="Microsoft-Windows-URLMon",
+        guid="{245F975D-909D-49ED-B8F9-9A75691D6B6B}")
       WHERE ID = 805 AND URL =~ URLFilter
 
-```
+</code></pre>
+

@@ -23,7 +23,7 @@ There are several parameter's available for search leveraging regex.
   - SearchVSS enables VSS search.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.EventLogs.PowershellScriptblock
 author: Matt Green - @mgreen27
 
@@ -83,31 +83,35 @@ parameters:
       All,"."
       Warning,"3"
       Verbose,"5"
-  - name: SearchVSS
-    description: "Add VSS into query."
-    type: bool
 
+  - name: VSSAnalysisAge
+    type: int
+    default: 0
+    description: |
+      If larger than zero we analyze VSS within this many days
+      ago. (e.g 7 will analyze all VSS within the last week).  Note
+      that when using VSS analysis we have to use the ntfs accessor
+      for everything which will be much slower.
 
 sources:
   - query: |
+      LET VSS_MAX_AGE_DAYS &lt;= VSSAnalysisAge
+      LET Accessor = if(condition=VSSAnalysisAge &gt; 0, then="ntfs_vss", else="auto")
+
       -- firstly set timebounds for performance
-      LET DateAfterTime <= if(condition=DateAfter,
+      LET DateAfterTime &lt;= if(condition=DateAfter,
         then=timestamp(epoch=DateAfter), else=timestamp(epoch="1600-01-01"))
-      LET DateBeforeTime <= if(condition=DateBefore,
+      LET DateBeforeTime &lt;= if(condition=DateBefore,
         then=timestamp(epoch=DateBefore), else=timestamp(epoch="2200-01-01"))
 
       -- Parse Log level dropdown selection
-      LET LogLevelRegex <= SELECT format(format="%v", args=Regex) as value
+      LET LogLevelRegex &lt;= SELECT format(format="%v", args=Regex) as value
         FROM parse_csv(filename=LogLevelMap, accessor="data")
         WHERE Choice=LogLevel LIMIT 1
 
       -- expand provided glob into a list of paths on the file system (fs)
-      LET fspaths <= SELECT FullPath
-        FROM glob(globs=expand(path=EvtxGlob))
-
-      -- function returning list of VSS paths corresponding to path
-      LET vsspaths(path) = SELECT FullPath
-        FROM Artifact.Windows.Search.VSS(SearchFilesGlob=path)
+      LET fspaths = SELECT OSPath
+        FROM glob(globs=expand(path=EvtxGlob), accessor=Accessor)
 
       -- function returning IOC hits
       LET evtxsearch(PathList) = SELECT * FROM foreach(
@@ -127,11 +131,11 @@ sources:
                   System.Level as Level,
                   System.Opcode as Opcode,
                   System.Task as Task,
-                  FullPath
-                FROM parse_evtx(filename=FullPath)
+                  OSPath
+                FROM parse_evtx(filename=OSPath, accessor=Accessor)
                 WHERE System.EventID.Value = 4104
-                    AND EventTime < DateBeforeTime
-                    AND EventTime > DateAfterTime
+                    AND EventTime &lt; DateBeforeTime
+                    AND EventTime &gt; DateAfterTime
                     AND  format(format="%d", args=System.Level) =~ LogLevelRegex.value[0]
                     AND if(condition=SearchStrings,
                       then=ScriptBlockText =~ SearchStrings,
@@ -144,24 +148,7 @@ sources:
                       else=TRUE)
           })
 
+        SELECT * FROM evtxsearch(PathList=fspaths)
 
-      -- include VSS in calculation and deduplicate with GROUP BY by file
-      LET include_vss = SELECT * FROM foreach(row=fspaths,
-            query={
-                SELECT *
-                FROM evtxsearch(PathList={
-                        SELECT FullPath FROM vsspaths(path=FullPath)
-                    })
-                GROUP BY EventRecordID,Channel
-              })
+</code></pre>
 
-      -- exclude VSS in EvtxHunt`
-      LET exclude_vss = SELECT *
-        FROM evtxsearch(PathList={SELECT FullPath FROM fspaths})
-
-      -- return rows
-      SELECT * FROM if(condition=SearchVSS,
-        then={ SELECT * FROM include_vss},
-        else={ SELECT * FROM exclude_vss})
-
-```

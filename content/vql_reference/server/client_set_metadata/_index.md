@@ -33,7 +33,10 @@ Sets client metadata.
 Client metadata is a set of free form key/value data (see
 client_metadata() function).
 
-Example:
+For existing keys, the value is overwritten. Setting a metadata
+key with a `NULL` value deletes that entry.
+
+### Example
 
 ```vql
 SELECT client_set_metadata(ClientId="C.1234", Foo="Bar")

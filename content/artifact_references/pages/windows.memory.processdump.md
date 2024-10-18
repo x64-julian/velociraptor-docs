@@ -9,7 +9,7 @@ Dump process memory and upload to the server.
 Previously named Windows.Triage.ProcessMemory
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Memory.ProcessDump
 description: |
   Dump process memory and upload to the server.
@@ -55,8 +55,8 @@ sources:
                               name=pathspec(Path=format(format="%d.dd", args=Pid))) AS ProcessMemory
              FROM scope()
           }, else={
-            SELECT ProcessName, CommandLine, Pid, FullPath,
-                   upload(file=FullPath) as CrashDump
+            SELECT ProcessName, CommandLine, Pid, OSPath,
+                   upload(file=OSPath) as CrashDump
             FROM proc_dump(pid=Pid)
           })
 
@@ -66,4 +66,5 @@ sources:
              SELECT * FROM UploadDump(Pid=Pid, ProcessName = ProcessName, CommandLine = CommandLine)
           })
 
-```
+</code></pre>
+

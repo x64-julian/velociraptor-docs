@@ -6,7 +6,7 @@ tags: [Client Artifact]
 
 Get User specific information like homedir, group etc from /etc/passwd.
 
-```yaml
+<pre><code class="language-yaml">
 name: Linux.Sys.Users
 description: Get User specific information like homedir, group etc from /etc/passwd.
 parameters:
@@ -20,7 +20,8 @@ sources:
       SELECT User, Description, Uid, Gid, Homedir, Shell
       FROM split_records(
             filenames=PasswordFile,
-            regex=":", record_regex="\n",
+            regex=":", record_regex="\r?\n",
             columns=["User", "X", "Uid", "Gid", "Description", "Homedir", "Shell"])
 
-```
+</code></pre>
+

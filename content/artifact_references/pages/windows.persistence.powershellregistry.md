@@ -15,7 +15,7 @@ using raw NTFS parsing (in case the user is currently logged on and
 the registry hive is locked).
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Persistence.PowershellRegistry
 description: |
   A common way of persistence is to install a hook into a user profile
@@ -55,7 +55,7 @@ sources:
           WHERE HomeDir and Gid AND Name =~ userRegex
         },
         query={
-          SELECT File.FullPath As FullPath,
+          SELECT File.OSPath As OSPath,
                  String.Offset AS Off,
                  String.HexData As Hex,
                  upload(file=File.FullPath, accessor="auto") AS Upload
@@ -64,4 +64,5 @@ sources:
               rules=yaraRule, context=50)
         })
 
-```
+</code></pre>
+

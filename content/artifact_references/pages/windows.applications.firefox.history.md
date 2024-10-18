@@ -6,11 +6,23 @@ tags: [Client Artifact]
 
 Enumerate the users Firefox history.
 
+## NOTES:
 
-```yaml
+This artifact is deprecated in favor of
+Generic.Forensic.SQLiteHunter and will be removed in future
+
+
+<pre><code class="language-yaml">
 name: Windows.Applications.Firefox.History
 description: |
   Enumerate the users Firefox history.
+
+  ## NOTES:
+
+  This artifact is deprecated in favor of
+  Generic.Forensic.SQLiteHunter and will be removed in future
+
+
 author: Zach Stanford @svch0st, Modified by @angry-bender
 parameters:
   - name: placesGlobs
@@ -52,4 +64,5 @@ sources:
           })
           WHERE url_visited =~ URLRegex
 
-```
+</code></pre>
+

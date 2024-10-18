@@ -27,7 +27,7 @@ https://en.wikipedia.org/wiki/List_of_Microsoft_Office_filename_extensions
 https://wiki.openoffice.org/wiki/Documentation/OOo3_User_Guides/Getting_Started/File_formats
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Generic.Applications.Office.Keywords
 description: |
   Microsoft Office documents among other document format (such as
@@ -71,19 +71,19 @@ parameters:
 
 sources:
   - query: |
-        LET office_docs = SELECT FullPath AS OfficePath,
+        LET office_docs = SELECT OSPath AS OfficePath,
              Mtime as OfficeMtime,
              Size as OfficeSize
         FROM glob(globs=searchGlob + documentGlobs)
 
         // A list of zip members inside the doc that have some content.
         LET document_parts = SELECT OfficePath,
-             FullPath AS ZipMemberPath
+             OSPath AS ZipMemberPath
         FROM glob(
            globs="/**",
            root=pathspec(DelegatePath=OfficePath),
            accessor='zip')
-        WHERE not IsDir and Size > 0
+        WHERE not IsDir and Size &gt; 0
 
         // For each document, scan all its parts for the keyword.
         SELECT OfficePath,
@@ -91,7 +91,7 @@ sources:
                OfficeSize,
                File.ModTime as InternalMtime,
                String.HexData as HexContext,
-               File.FullPath AS FullPath
+               File.OSPath AS OSPath
         FROM foreach(
            row=office_docs,
            query={
@@ -104,4 +104,5 @@ sources:
                  accessor='zip')
         })
 
-```
+</code></pre>
+

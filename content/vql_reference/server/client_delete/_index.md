@@ -23,12 +23,10 @@ client_id||string (required)
 really_do_it||bool
 
 Required Permissions: 
-<i class="linkcolour label pull-right label-success">SERVER_ADMIN</i>
+<i class="linkcolour label pull-right label-success">DELETE_RESULTS</i>
 
 ### Description
 
 Delete all information related to a client from the filestore.
-
-This required the SERVER_ADMIN permission.
 
 

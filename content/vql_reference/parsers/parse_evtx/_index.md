@@ -22,6 +22,7 @@ Arg | Description | Type
 filename|A list of event log files to parse.|list of OSPath (required)
 accessor|The accessor to use.|string
 messagedb|A Message database from https://github.com/Velocidex/evtx-data.|string
+workers|If specified we use this many workers to parse the file in parallel (default 1).|int64
 
 Required Permissions: 
 <i class="linkcolour label pull-right label-success">FILESYSTEM_READ</i>
@@ -41,7 +42,7 @@ You should probably almost always filter by one or more event ids
 
 ### Example
 
-```sql
+```vql
 SELECT System.TimeCreated.SystemTime as Timestamp,
        System.EventID.Value as EventID,
        EventData.ImagePath as ImagePath,

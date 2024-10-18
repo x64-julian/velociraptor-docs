@@ -10,7 +10,7 @@ When inbound logging enabled, this file will show all inbound TeamViewer
 connections.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Applications.TeamViewer.Incoming
 description: |
    Parses the TeamViewer Connections_incoming.txt log file.
@@ -47,37 +47,42 @@ parameters:
     description: "Regex of user"
     default: .
     type: regex
-  - name: SearchVSS
-    description: "Add VSS into query."
-    type: bool
 
+  - name: VSSAnalysisAge
+    type: int
+    default: 0
+    description: |
+      If larger than zero we analyze VSS within this many days
+      ago. (e.g 7 will analyze all VSS within the last week).  Note
+      that when using VSS analysis we have to use the ntfs accessor
+      for everything which will be much slower.
 
 sources:
   - query: |
+      LET VSS_MAX_AGE_DAYS &lt;= VSSAnalysisAge
+      LET Accessor = if(condition=VSSAnalysisAge &gt; 0, then="ntfs_vss", else="auto")
+
       -- Build time bounds
-      LET DateAfterTime <= if(condition=DateAfter,
+      LET DateAfterTime &lt;= if(condition=DateAfter,
         then=DateAfter, else="1600-01-01")
-      LET DateBeforeTime <= if(condition=DateBefore,
+      LET DateBeforeTime &lt;= if(condition=DateBefore,
         then=DateBefore, else="2200-01-01")
 
       -- expand provided glob into a list of paths on the file system (fs)
-      LET fspaths <= SELECT FullPath FROM glob(globs=expand(path=FileGlob))
+      LET fspaths &lt;= SELECT OSPath FROM glob(
+         globs=expand(path=FileGlob), accessor=Accessor)
 
-      -- function returning list of VSS paths corresponding to path
-      LET vsspaths(path) = SELECT FullPath
-        FROM Artifact.Windows.Search.VSS(SearchFilesGlob=path)
-
-      LET parse_log(FullPath) = SELECT FullPath,
+      LET parse_log(OSPath, Accessor) = SELECT OSPath,
           parse_string_with_regex(
             string=Line,
-            regex="^(?P<TeamViewerID>^\\d+)\\s+"+
-              "(?P<SourceHost>.+)\\s" +
-              "(?P<StartTime>\\d{2}-\\d{2}-\\d{4}\\s\\d{2}:\\d{2}:\\d{2})\\s" +
-              "(?P<EndTime>\\d{2}-\\d{2}-\\d{4}\\s\\d{2}:\\d{2}:\\d{2})\\s" +
-              "(?P<User>.+)\\s+" +
-              "(?P<ConnectionType>[^\\s]+)\\s+" +
-              "(?P<ConnectionID>.+)$") as Record
-        FROM parse_lines(filename=FullPath)
+            regex="^(?P&lt;TeamViewerID&gt;^\\d+)\\s+"+
+              "(?P&lt;SourceHost&gt;.+)\\s" +
+              "(?P&lt;StartTime&gt;\\d{2}-\\d{2}-\\d{4}\\s\\d{2}:\\d{2}:\\d{2})\\s" +
+              "(?P&lt;EndTime&gt;\\d{2}-\\d{2}-\\d{4}\\s\\d{2}:\\d{2}:\\d{2})\\s" +
+              "(?P&lt;User&gt;.+)\\s+" +
+              "(?P&lt;ConnectionType&gt;[^\\s]+)\\s+" +
+              "(?P&lt;ConnectionID&gt;.+)$") as Record
+        FROM parse_lines(filename=OSPath, accessor=Accessor)
         WHERE Line
           AND Record.TeamViewerID =~ TeamViewerIDRegex
           AND Record.SourceHost =~ SourceHostRegex
@@ -91,28 +96,13 @@ sources:
                                 format="02-01-2006 15:04:05") AS StartTime,
                       timestamp(epoch=Record.EndTime,
                                 format="02-01-2006 15:04:05") AS EndTime
-               FROM parse_log(FullPath=FullPath)
-               WHERE StartTime < DateBeforeTime
-                    AND StartTime > DateAfterTime
-                    AND EndTime < DateBeforeTime
-                    AND EndTime > DateAfterTime
+               FROM parse_log(OSPath=OSPath, Accessor=Accessor)
+               WHERE StartTime &lt; DateBeforeTime
+                    AND StartTime &gt; DateAfterTime
+                    AND EndTime &lt; DateBeforeTime
+                    AND EndTime &gt; DateAfterTime
             })
 
-      -- include VSS in calculation and deduplicate with GROUP BY by file
-      LET include_vss = SELECT * FROM foreach(row=fspaths,
-            query={
-                SELECT *
-                FROM logsearch(PathList={
-                        SELECT FullPath FROM vsspaths(path=FullPath)
-                    })
-                GROUP BY Record
-              })
-
-      -- exclude VSS in logsearch`
-      LET exclude_vss = SELECT * FROM logsearch(PathList={SELECT FullPath FROM fspaths})
-
-
-      -- return rows
       SELECT
         Record.TeamViewerID as TeamViewerID,
         Record.SourceHost as SourceHost,
@@ -121,9 +111,8 @@ sources:
         Record.User as User,
         Record.ConnectionType as ConnectionType,
         Record.ConnectionID as ConnectionID,
-        FullPath
-      FROM if(condition=SearchVSS,
-            then=include_vss,
-            else=exclude_vss)
+        OSPath
+      FROM logsearch(PathList=fspaths)
 
-```
+</code></pre>
+

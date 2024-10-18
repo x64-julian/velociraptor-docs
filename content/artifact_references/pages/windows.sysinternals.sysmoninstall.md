@@ -13,7 +13,7 @@ we recommend you review the config file and override it in the GUI
 with one that better suits your needs.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Sysinternals.SysmonInstall
 description: |
   Sysmon is a kernel level system monitor written by
@@ -45,7 +45,7 @@ parameters:
 
 sources:
 - query: |
-    LET bin <= SELECT * FROM switch(
+    LET bin &lt;= SELECT * FROM switch(
     a={
       SELECT * FROM glob(globs=SysmonFileLocation)
     }, b={
@@ -56,7 +56,7 @@ sources:
     LET existing_hash = SELECT lowcase(
        string=parse_string_with_regex(
           string=Stdout, regex="hash:.+SHA256=([^\\n\\r]+)").g1) AS Hash
-    FROM execve(argv=[bin[0].FullPath, "-c"])
+    FROM execve(argv=[bin[0].OSPath, "-c"])
 
     LET sysmon_config = SELECT * FROM Artifact.Generic.Utils.FetchBinary(
        ToolName="SysmonConfig", IsExecutable=FALSE)
@@ -67,10 +67,10 @@ sources:
     LET doit = SELECT * FROM chain(
     a={
        // First force an uninstall to clear the config
-       SELECT * FROM execve(argv= [ bin[0].FullPath, "-accepteula", "-u"], length=10000000)
+       SELECT * FROM execve(argv= [ bin[0].OSPath, "-accepteula", "-u"], length=10000000)
     }, b={
-       SELECT * FROM execve(argv= [ bin[0].FullPath,
-           "-accepteula", "-i", sysmon_config[0].FullPath ], length=10000000)
+       SELECT * FROM execve(argv= [ bin[0].OSPath,
+           "-accepteula", "-i", sysmon_config[0].OSPath ], length=10000000)
     }, c=ensure_service_running)
 
     // Only install sysmon if the existing config hash is not the same
@@ -90,4 +90,5 @@ sources:
     then={ SELECT * FROM doit },
     else={ SELECT * FROM ensure_service_running })
 
-```
+</code></pre>
+

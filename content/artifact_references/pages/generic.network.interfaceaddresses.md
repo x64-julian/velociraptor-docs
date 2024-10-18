@@ -8,7 +8,7 @@ Network interfaces and relevant metadata. This artifact works on all
 supported OSs.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Generic.Network.InterfaceAddresses
 description: |
   Network interfaces and relevant metadata. This artifact works on all
@@ -20,11 +20,14 @@ aliases:
 sources:
   - query: |
         LET interface_address =
-           SELECT Index, MTU, Name, HardwareAddr, Flags, Addrs
+           SELECT Index, MTU, Name,
+                  HardwareAddr.String AS HardwareAddr,
+                  Flags, Addrs
            from interfaces()
 
-        SELECT Index, MTU, Name, HardwareAddr.String As HardwareAddr,
+        SELECT Index, MTU, Name, HardwareAddr,
            Flags, Addrs.IP as IP, Addrs.Mask.String as Mask
         FROM flatten(query=interface_address)
 
-```
+</code></pre>
+

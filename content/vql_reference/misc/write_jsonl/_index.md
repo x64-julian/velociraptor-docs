@@ -19,9 +19,10 @@ no_edit: true
 
 Arg | Description | Type
 ----|-------------|-----
-filename|CSV files to open|string (required)
+filename|CSV files to open|OSPath (required)
 accessor|The accessor to use|string
 query|query to write into the file.|StoredQuery (required)
+buffer_size|Maximum size of buffer before flushing to file.|int
 
 Required Permissions: 
 <i class="linkcolour label pull-right label-success">FILESYSTEM_WRITE</i>

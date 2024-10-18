@@ -7,7 +7,7 @@ tags: [Client Artifact]
 Displays parsed information from crontab.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Linux.Sys.Crontab
 description: |
   Displays parsed information from crontab.
@@ -27,27 +27,27 @@ sources:
     query: |
       LET raw = SELECT * FROM foreach(
           row={
-            SELECT FullPath from glob(globs=split(string=cronTabGlob, sep=","))
+            SELECT OSPath from glob(globs=split(string=cronTabGlob, sep=","))
           },
           query={
-            SELECT FullPath, data, parse_string_with_regex(
+            SELECT OSPath, data, parse_string_with_regex(
               string=data,
               regex=[
                  /* Regex for event (Starts with @) */
-                 "^(?P<Event>@[a-zA-Z]+)\\s+(?P<Command>.+)",
+                 "^(?P&lt;Event&gt;@[a-zA-Z]+)\\s+(?P&lt;Command&gt;.+)",
 
                  /* Regex for regular command. */
-                 "^(?P<Minute>[^\\s]+)\\s+"+
-                 "(?P<Hour>[^\\s]+)\\s+"+
-                 "(?P<DayOfMonth>[^\\s]+)\\s+"+
-                 "(?P<Month>[^\\s]+)\\s+"+
-                 "(?P<DayOfWeek>[^\\s]+)\\s+"+
-                 "(?P<User>[^\\s]+)\\s+"+
-                 "(?P<Command>.+)$"]) as Record
+                 "^(?P&lt;Minute&gt;[^\\s]+)\\s+"+
+                 "(?P&lt;Hour&gt;[^\\s]+)\\s+"+
+                 "(?P&lt;DayOfMonth&gt;[^\\s]+)\\s+"+
+                 "(?P&lt;Month&gt;[^\\s]+)\\s+"+
+                 "(?P&lt;DayOfWeek&gt;[^\\s]+)\\s+"+
+                 "(?P&lt;User&gt;[^\\s]+)\\s+"+
+                 "(?P&lt;Command&gt;.+)$"]) as Record
 
             /* Read lines from the file and filter ones that start with "#" */
             FROM split_records(
-               filenames=FullPath,
+               filenames=OSPath,
                regex="\n", columns=["data"]) WHERE not data =~ "^\\s*#"
             }) WHERE Record.Command
 
@@ -59,14 +59,16 @@ sources:
                Record.Month AS Month,
                Record.DayOfWeek AS DayOfWeek,
                Record.Command AS Command,
-               FullPath AS Path
+               OSPath AS Path
       FROM raw
   - name: CronScripts
     query: |
-      SELECT Mtime, FullPath, read_file(filename=FullPath,length=Length) AS Content FROM glob(globs=split(string=cronTabScripts, sep=","))
+      SELECT Mtime, OSPath, read_file(filename=OSPath,length=Length) AS Content
+      FROM glob(globs=split(string=cronTabScripts, sep=","))
   - name: Uploaded
     query: |
-      SELECT FullPath, upload(file=FullPath) AS Upload
+      SELECT OSPath, upload(file=OSPath) AS Upload
       FROM glob(globs=split(string=cronTabGlob + "," + cronTabScripts, sep=","))
 
-```
+</code></pre>
+

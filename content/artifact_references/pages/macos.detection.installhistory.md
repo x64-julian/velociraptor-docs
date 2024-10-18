@@ -7,7 +7,7 @@ tags: [Client Artifact]
 This artifact collects entries from the InstallHistory .plist file
 
 
-```yaml
+<pre><code class="language-yaml">
 name: MacOS.Detection.InstallHistory
 description: |
   This artifact collects entries from the InstallHistory .plist file
@@ -25,11 +25,11 @@ parameters:
 sources:
 - name: Install History
   query: |
-    LET SWplist = SELECT FullPath FROM glob(globs=InstallHistoryGlob)
+    LET SWplist = SELECT OSPath FROM glob(globs=InstallHistoryGlob)
 
     LET SoftwareDetails =
             SELECT * FROM foreach(
-                row=plist(file=FullPath),
+                row=plist(file=OSPath),
                 query={
                     SELECT
                         get(member="displayName", default="") AS DisplayName,
@@ -42,4 +42,5 @@ sources:
             })
     SELECT * FROM foreach(row=SWplist, query=SoftwareDetails)
 
-```
+</code></pre>
+

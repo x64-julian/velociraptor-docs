@@ -17,7 +17,7 @@ like this:
 ```
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Generic.Forensic.LocalHashes.Query
 description: |
   This artifact maintains a local (client side) database of file
@@ -50,7 +50,7 @@ parameters:
 
 sources:
   - query: |
-      LET hash_db <= SELECT FullPath
+      LET hash_db &lt;= SELECT OSPath
       FROM Artifact.Generic.Forensic.LocalHashes.Init(HashDb=HashDb)
 
       -- Check hashes from the CSV or comma delimited input
@@ -69,9 +69,10 @@ sources:
       query={
          SELECT path AS Path, md5 AS MD5, size AS Size,
                 timestamp(epoch=time) AS Timestamp
-         FROM sqlite(file=hash_db[0].FullPath,
+         FROM sqlite(file=hash_db[0].OSPath,
                      query="SELECT path, md5, size, timestamp AS time FROM hashes WHERE md5 = ?",
                      args=Hash)
       })
 
-```
+</code></pre>
+

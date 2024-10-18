@@ -367,6 +367,7 @@ Infosec's
 initialised
 inode
 inodes
+InsightIDR
 Inspiron
 InstalledSize
 instantiation
@@ -1357,3 +1358,216 @@ CyberCrime
 
 # content/blog/2023/2023-05-05-release-notes-0.6.9/_index.md
 lockdown
+gapped
+
+# content/announcements/2023-trainings/_index.md
+MPLogs
+cmdline
+geeking
+teamserver
+
+# content/vql_reference/basic/unzip/_index.md
+autodetected
+tgz
+
+#content/vql_reference/plugin/upload_s3/_index.md
+KMS
+kmsencryptionkey
+uploadroot
+credentialstoken
+
+# content/blog/2023/2023-07-27-release-notes-0.7.0/index.md
+SQLiteHunter
+deduplicates
+leveldb
+
+# <url-free> content/vql_reference/misc/_index.md
+LogScale
+logscale
+apibaseurl
+
+
+# content/announcements/2023-velocon/_index.md
+Andreas
+Aon
+EDRs
+Flamino
+Güneysu
+IMPERUM
+Ilioukevitch
+Kostya
+Kulkarni
+Leeuwen
+PSA
+Paluch
+Phalgun
+SIDR
+Semanur
+Shellbags
+UAL
+UserAssist
+WinSCP
+extensibility
+masse
+transformative
+Uncompress
+
+# content/docs/_index.md
+InsightIDR
+XSS
+
+# content/docs/vql/_index.md
+unsimplified
+
+# content/blog/2023/2023-11-15-sigma_in_velociraptor/_index.md
+Hayabusa
+SIEMs
+backend's
+backends
+ruleset
+schemas
+taskscheduler
+
+# content/blog/2023/2023-11-15-release-notes-0.7.1/_index.md
+Templated
+decrypted
+
+# content/vql_reference/event/watch_etw/_index.md
+TdhGetEventMapInformation
+MapInfo
+
+# content/docs/deployment/security/_index.md
+mTLS
+unencrypted
+
+# content/docs/deployment/troubleshooting/_index.md
+DataDog
+Grafana
+
+# content/docs/deployment/clients/_index.md
+Winget
+autoupdate
+denylist
+winget
+
+# content/vql_reference/misc/xattr/_index.md
+xattr
+
+
+# content/vql_reference/basic/humanize/_index.md
+MiB
+ibytes
+
+# content/blog/2024/2024-03-10-release-notes-0.72/_index.md
+CloudFlare
+EWF
+TCT
+Websocket
+balancers
+decompile
+dyndns
+sortable
+topologies
+uploaders
+virtualize
+websocket
+websockets
+
+# content/vql_reference/plugin/upload_s3/_index.md
+kms
+serverside
+
+# content/vql_reference/misc/host/_index.md
+AXFR
+CNAME
+DNSKEY
+SOA
+
+# content/vql_reference/plugin/yara/_index.md
+yarac
+
+# content/docs/forensic/filesystem/accessors/_index.md
+ewf
+rebase
+seekable
+snapshotting
+unicode
+unmapped
+vss
+
+# content/docs/vql/join/_index.md
+Alfreds
+Anders
+ContactName
+CustomerID
+CustomerName
+Emparedados
+Futterkiste
+OrderDate
+OrderID
+Taquería
+helados
+
+# content/blog/2024/2024-04-12-registry-hunter/_index.md
+EulaCheck
+eulacheck
+specilized
+
+walkthrough
+
+
+<url-free> content/blog/2024/2024-05-09-detection-engineering/_index.md
+--------------------------------------------------------------------------------
+ChainSaw
+SigmaHQ
+Winlogbeats
+architecting
+executable's
+
+desc
+rr
+
+<url-free> content/knowledge_base/tips/deleting_old_data.md
+DeleteManyFlows
+DeleteMonitoringData
+
+<url-free> content/blog/2024/2024-07-22-how-to-use-your-own-certificates/_index.md
+--------------------------------------------------------------------------------
+DigiCert
+reliancecyber
+vvv
+wsarecv
+OpenSSL
+journald
+lang
+
+
+<url-free> content/vql_reference/accessors/_index.md
+--------------------------------------------------------------------------------
+MSCFB
+idx
+mscfb
+vhdx
+vmdk
+--------------------------------------------------------------------------------
+
+Misspelled words:
+<url-free> content/blog/2024/2024-09-10-release-notes-0.73/_index.md
+--------------------------------------------------------------------------------
+Paginator
+SUID
+Timesketch
+errored
+timesketch
+vmdk
+--------------------------------------------------------------------------------
+
+Misspelled words:
+<url-free> content/blog/2024/2024-09-12-timelines/_index.md
+--------------------------------------------------------------------------------
+Timelining
+timelining
+CLI
+Plaso
+TimesketchUpload
+Misje

@@ -18,7 +18,7 @@ prefetch files are not updated immediately - there could be a small
 delay between the execution and the prefetch being modified.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Detection.Usn
 description: |
   NTFS is a journal filesystem. This means that it maintains a journal
@@ -48,12 +48,17 @@ parameters:
     type: int
     description: How many seconds before rechecking the USN journal.
     default: "30"
+  - name: NTFS_CACHE_TIME
+    type: int
+    description: How often to flush the NTFS cache.
+    default: "30"
 
 precondition: SELECT OS from info() where OS = "windows"
 
 sources:
   - query: |
       SELECT * FROM watch_usn(device=Device)
-      WHERE FullPath =~ PathRegex
+      WHERE OSPath =~ PathRegex
 
-```
+</code></pre>
+

@@ -19,9 +19,9 @@ no_edit: true
 
 Arg | Description | Type
 ----|-------------|-----
-item|The item to path|Any (required)
-patch|A JSON Patch to apply|Any
-merge|A merge-patch to apply|Any
+item|The item to patch|Any (required)
+patch|A JSON patch to apply|Any
+merge|A merge patch to apply|Any
 
 ### Description
 
@@ -34,18 +34,20 @@ https://github.com/evanphx/json-patch.
 I practice you can use this to update server settings - for
 example, consider the client event monitoring state.
 
-```text
+```vql
 SELECT get_client_monitoring() FROM scope()
+```
 
- [
+```json
+[
   {
-   "get_client_monitoring": {
-    "artifacts": [
-     "Generic.Client.Stats"
-    ]
-   }
+    "get_client_monitoring": {
+      "artifacts": [
+        "Generic.Client.Stats"
+      ]
+    }
   }
- ]
+]
 ```
 
 Suppose we wish to add a new artifact, we can patch it with the json:
@@ -56,7 +58,7 @@ Suppose we wish to add a new artifact, we can patch it with the json:
 This can then be immediately pushed to `set_client_monitoring()`
 to update the monitoring state.
 
-```
+```vql
 SELECT set_client_monitoring(value=patch(
        item=get_client_monitoring(),
        patch=[dict(op="add", path="/artifacts/0", value="Windows.Events.DNSQueries")]))

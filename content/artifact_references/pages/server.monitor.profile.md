@@ -27,8 +27,12 @@ go tool pprof -callgrind -output=profile.grind profile.bin
 kcachegrind profile.grind
 ```
 
+NOTE: As of 0.7.0 release, this artifact will also collect
+goroutines and heap profiles as distinct sources in a more readable
+way.
 
-```yaml
+
+<pre><code class="language-yaml">
 name: Server.Monitor.Profile
 description: |
   This artifact collects profiling information from the running
@@ -54,18 +58,24 @@ description: |
   kcachegrind profile.grind
   ```
 
+  NOTE: As of 0.7.0 release, this artifact will also collect
+  goroutines and heap profiles as distinct sources in a more readable
+  way.
+
 type: SERVER
 
 parameters:
   - name: Allocs
     description: A sampling of all past memory allocations
     type: bool
+    default: Y
   - name: Block
     description: Stack traces that led to blocking on synchronization primitives
     type: bool
   - name: Goroutine
     description: Stack traces of all current goroutines
     type: bool
+    default: Y
   - name: Heap
     description: A sampling of memory allocations of live objects
     type: bool
@@ -94,11 +104,16 @@ parameters:
     description: Duration of sampling for Profile and Trace.
     default: "30"
 
+export: |
+    LET CleanUp(Name) = regex_replace(
+        re="www.velocidex.com/golang/velociraptor/",
+        replace="", source=Name)
+
 sources:
   - query: |
       SELECT Type,
-             if(condition=get(field="FullPath"),
-                then=upload(name=Type + ".bin", file=FullPath)) AS File,
+             if(condition=get(field="OSPath"),
+             then=upload(name=Type + ".bin", file=OSPath)) AS File,
              get(member="Line") AS Line
       FROM profile(allocs=Allocs, block=Block, goroutine=Goroutine,
                    heap=Heap, mutex=Mutex, profile=Profile, trace=Trace,
@@ -106,4 +121,54 @@ sources:
                    debug=if(condition=Verbose, then=2, else=1),
                    duration=atoi(string=Duration))
 
-```
+  - name: Goroutines
+    query: |
+      SELECT *, {
+         SELECT format(format="%v (%v:%v)",
+             args=[CleanUp(Name=Name), basename(path=File), Line])
+         FROM CallStack
+         WHERE File =~ 'velociraptor|vfilter|go-ntfs'
+         LIMIT 10
+      } AS CallStack
+      FROM profile_goroutines()
+      WHERE CallStack
+
+  - name: Memory
+    query: |
+      SELECT InUseBytes, InUseObjects, {
+          SELECT format(format="%v (%v:%v)",
+            args=[CleanUp(Name=Name), basename(path=File), Line])
+          FROM CallStack
+          WHERE File =~ 'velociraptor|vfilter|go-ntfs'
+          LIMIT 10
+      } AS CallStack
+      FROM profile_memory()
+      ORDER BY InUseBytes DESC
+
+  - name: Logs
+    query: |
+      SELECT * FROM profile(logs=TRUE)
+
+  - name: RunningQueries
+    query: |
+      SELECT Line.Start AS Timestamp, Line.Query AS Query
+      FROM profile(queries=TRUE)
+      WHERE NOT Line.Duration
+
+  - name: AllQueries
+    query: |
+      SELECT Line.Start AS Timestamp, int(int = Line.Duration / 1000000) AS DurationSec, Line.Query AS Query
+      FROM profile(queries=TRUE)
+
+  - name: Metrics
+    query: |
+      SELECT Line.name AS Name, Line.value as value
+      FROM profile(metrics=TRUE)
+
+
+column_types:
+  - name: InUseBytes
+    type: mb
+
+</code></pre>
+

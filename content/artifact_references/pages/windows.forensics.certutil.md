@@ -13,7 +13,7 @@ valuable metadata. This artifact parses this metadata to establish
 what was downloaded and when.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Forensics.CertUtil
 description: |
   The Windows Certutil binary is capable of downloading arbitrary
@@ -26,8 +26,13 @@ description: |
 
 reference:
   - https://u0041.co/blog/post/3
+  - https://thinkdfir.com/2020/07/30/certutil-download-artefacts/
+  - https://lolbas-project.github.io/lolbas/Binaries/Certutil/
 
 parameters:
+  - name: MinSize
+    type: int
+    description: Only show contents larger than this size.
   - name: URLWhitelist
     type: csv
     default: |
@@ -52,8 +57,27 @@ parameters:
   - name: AlsoUpload
     type: bool
 
+  - name: VSSAnalysisAge
+    type: int
+    default: 0
+    description: |
+      If larger than zero we analyze VSS within this many days
+      ago. (e.g 7 will analyze all VSS within the last week).  Note
+      that when using VSS analysis we have to use the ntfs accessor
+      for everything which will be much slower.
+
+  - name: DISABLE_DANGEROUS_API_CALLS
+    type: bool
+    description: |
+      Enable this to disable potentially flakey APIs which may cause
+      crashes.
+
+
 sources:
   - query: |
+      LET VSS_MAX_AGE_DAYS &lt;= VSSAnalysisAge
+      LET Accessor = if(condition=VSSAnalysisAge &gt; 0, then="ntfs_vss", else="auto")
+
       LET Profile = '[
         ["Header", 0, [
           ["UrlSize", 12, "uint32"],
@@ -62,41 +86,48 @@ sources:
           ["FileSize", 112, "uint32"],
           ["URL", 116, "String", {
               "encoding": "utf16",
-              "length": "x=>x.UrlSize"
+              "length": "x=&gt;x.UrlSize"
           }],
-          ["Hash", "x=>x.UrlSize + 116", "String", {
+          ["Hash", "x=&gt;x.UrlSize + 116", "String", {
               "encoding": "utf16",
-              "length": "x=>x.HashSize"
+              "length": "x=&gt;x.HashSize"
           }]
         ]]
       ]'
 
       -- Build a whitelist regex
-      LET URLRegex <= "^" + join(array=URLWhitelist.URL, sep="|")
-      LET Files = SELECT FullPath,
+      LET URLRegex &lt;= "^" + join(array=URLWhitelist.URL, sep="|")
+      LET Files = SELECT OSPath,
 
           -- Parse each metadata file.
-          parse_binary(filename=FullPath,
+          parse_binary(filename=OSPath, accessor=Accessor,
                        profile=Profile,
                        struct="Header") AS Header,
 
-                       -- The content is kept in the Content directory.
-                       regex_replace(re="MetaData",
-                                     replace="Content",
-                                     source=FullPath) AS Content
-      FROM glob(globs=[MetadataGlobUser,MetadataGlobSystem])
+          -- The content is kept in the Content directory.
+          OSPath.Dirname.Dirname + "Content" + OSPath.Basename AS _ContentPath,
+          read_file(length=4, accessor=Accessor,
+                filename=OSPath.Dirname.Dirname + "Content" + OSPath.Basename) AS ContentHeader
+      FROM glob(globs=[MetadataGlobUser, MetadataGlobSystem], accessor=Accessor)
+      WHERE Header.FileSize &gt; MinSize
 
-      SELECT * FROM foreach(row=Files,
-      query={
-          SELECT FullPath AS _MetadataFile,
-               if(condition=AlsoUpload, then=upload(file=FullPath)) AS _MetdataUpload,
-               if(condition=AlsoUpload, then=upload(file=Content)) AS _Upload,
+      SELECT OSPath AS _MetadataFile, _ContentPath,
+               if(condition=AlsoUpload, then=upload(file=OSPath, accessor=Accessor)) AS _MetdataUpload,
+               if(condition=AlsoUpload, then=upload(file=_ContentPath, accessor=Accessor)) AS _Upload,
                Header.URL AS URL,
+               url(parse=URL).Host AS UrlTLD,
                Header.FileSize AS FileSize,
                regex_replace(re='"', replace="", source=Header.Hash) AS Hash,
-               timestamp(winfiletime=Header.DownloadTime) AS DownloadTime
-          FROM scope()
-          WHERE NOT URL =~ URLRegex
-      })
+               timestamp(winfiletime=Header.DownloadTime) AS DownloadTime,
+               if(condition= ContentHeader=~ 'MZ',
+                    then= parse_pe(file= _ContentPath, accessor=Accessor).VersionInformation,
+                    else= 'N/A' ) as VersionInformation,
+               if(condition= ContentHeader=~ 'MZ',
+                    then= authenticode(filename= _ContentPath, accessor=Accessor),
+                    else= 'N/A' ) as Authenticode
 
-```
+      FROM Files
+      WHERE NOT URL =~ URLRegex
+
+</code></pre>
+

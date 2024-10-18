@@ -279,6 +279,43 @@ else={
 })
 ```
 
+### Subqueries as columns
+
+You can use a subquery as a column which will cause it to be evaluated
+for each row (in this way it is similar to the `foreach()` plugin).
+
+Since subqueries are always an array of dictionaries, the output if
+often difficult to read when the subquery returns many rows or
+columns. As a special case, VQL will simplify subqueries:
+
+1. If the subquery returns one row and has several columns, VQL will
+   put a single dictionary of data in the column.
+2. If the subquery returns one row and a single column, the value is
+   expanded into the cell.
+
+These heuristics are helpful when constructing subqueries to enrich
+columns. If you wish to preserve the array of dicts you can use a VQL
+function instead.
+
+Here is an example to demonstrate:
+```vql
+LET Foo =  SELECT "Hello" AS Greeting FROM scope()
+
+SELECT { SELECT "Hello" AS Greeting FROM scope() } AS X,
+       { SELECT "Hello" AS Greeting, "Goodbye" AS Farewell FROM scope() } AS Y,
+       Foo AS Z
+FROM scope()
+```
+
+In the above query - X is a subquery with a single row and a single
+column, therefore VQL will simplify the column X to contain `"Hello"`
+The second query contains two columns so VQL will simplify it into a
+dict.
+
+Finally to get the full unsimplified content, a VQL stored query can
+be used. This will result in an array of one dict, containing a single
+column `Greeting` with value of `Hello`
+
 
 ### Arrays
 
@@ -318,7 +355,8 @@ While these make sense for SQL since they affect the way indexes are
 used in the query, VQL does not have table indexes, nor does it have
 any tables. Therefore the `JOIN` operator is meaningless for
 Velociraptor. To keep VQL simple and accessible, we specifically did
-not implement a `JOIN` operator.
+not implement a `JOIN` operator. For a more detailed discussion of the
+`JOIN` operator see [emulating join in VQL]({{% relref "./join" %}})
 
 Instead of a `JOIN` operator, VQL has the `foreach()` plugin, which is
 probably the most commonly used plugin in VQL queries. The `foreach()`
@@ -834,3 +872,37 @@ Some aggregate functions:
 These can be seen in the query below.
 
 ![Aggregate functions](image70.png)
+
+### VQL Lambda functions
+
+In various places it is possible to specify a VQL lambda
+function. These functions a simple VQL expressions which can be used
+as filters, or simple callbacks in some plugins. The format is simple:
+
+```
+x=>x.Field + 2
+```
+
+Represents a simple function with a single parameter `x`. When the
+lambda function is evaluated, the caller will pass the value as `x`
+and receive the result of the function.
+
+Usually lambda functions are specified as strings, and will be
+interpreted at run time. For example the `eval()` function allows a
+lambda to be directly evaluated (with `x` being the current scope in
+that case).
+
+
+```vql
+SELECT eval(func="x=>1+1") AS Two FROM scope()
+```
+
+The scope that is visited at the place where the lambda is evaluated
+will be passed to the lambda function - this allows the lambda to
+access previously defined helper functions.
+
+```vql
+LET AddTwo(x) = x + 2
+
+SELECT eval(func="x=>AddTwo(x=1)") AS Three FROM scope()
+```

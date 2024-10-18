@@ -22,7 +22,7 @@ database. You can rate limit this artifact using the ops/sec setting
 to perform a slow update of the local file hash database.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Generic.Forensic.LocalHashes.Glob
 description: |
   This artifact maintains a local (client side) database of file
@@ -57,28 +57,29 @@ parameters:
 
 sources:
   - query: |
-      LET hash_db <= SELECT FullPath
+      LET hash_db &lt;= SELECT OSPath
       FROM Artifact.Generic.Forensic.LocalHashes.Init(HashDb=HashDb)
 
-      LET path <= hash_db[0].FullPath
+      LET path &lt;= hash_db[0].OSPath
 
-      LET _ <= log(message="Will use local hash database " + path)
+      LET _ &lt;= log(message="Will use local hash database " + path)
 
       // Crawl the files and calculate their hashes
-      LET files = SELECT FullPath, Size, hash(path=FullPath).MD5 AS Hash
+      LET files = SELECT OSPath, Size, hash(path=OSPath).MD5 AS Hash
       FROM glob(globs=HashGlob)
       WHERE Mode.IsRegular
 
-      LET insertion = SELECT FullPath, Hash, Size, {
+      LET insertion = SELECT OSPath, Hash, Size, {
          SELECT * FROM sqlite(file=path,
             query="INSERT into hashes (path, md5, timestamp, size) values (?,?,?,?)",
-            args=[FullPath, Hash, now(), Size])
+            args=[OSPath.String, Hash, now(), Size])
       } AS Insert
       FROM files
       WHERE Insert OR TRUE
 
-      SELECT FullPath, Hash, Size
+      SELECT OSPath, Hash, Size
       FROM insertion
       WHERE NOT SuppressOutput
 
-```
+</code></pre>
+

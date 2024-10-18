@@ -14,7 +14,7 @@ can then be used to find the executed program.
 This artifact works on Windows 10 1607 version.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.System.Amcache
 description: |
   Get information from the system's amcache.
@@ -59,12 +59,12 @@ sources:
                X.BinFileVersion AS BinFileVersion
         FROM foreach(
           row={
-            SELECT FullPath from glob(globs=expand(path=amCacheGlob))
-            WHERE log(message="Processing "+FullPath)
+            SELECT OSPath from glob(globs=expand(path=amCacheGlob))
+            WHERE log(message="Processing "+OSPath)
           }, query={
             SELECT * from read_reg_key(
                globs=amCacheRegPath,
-               root=pathspec(DelegatePath=FullPath),
+               root=pathspec(DelegatePath=OSPath),
                accessor='raw_reg'
             )
         })
@@ -73,14 +73,14 @@ sources:
     query: |
         SELECT * FROM foreach(
           row={
-            SELECT FullPath from glob(globs=expand(path=amCacheGlob))
+            SELECT OSPath from glob(globs=expand(path=amCacheGlob))
           }, query={
             SELECT get(item=scope(), member="100") As ProductId,
                    get(item=scope(), member="101") As SHA1,
-                   get(item=scope(), member="15") As FullPath,
+                   get(item=scope(), member="15") As OSPath,
                    Key.Mtime as LastModifiedKey
             FROM read_reg_key(
-               root=pathspec(DelegatePath=FullPath),
+               root=pathspec(DelegatePath=OSPath),
                globs='/Root/File/*/*',
                accessor='raw_reg'
             )
@@ -90,7 +90,7 @@ reports:
   - type: CLIENT
     template: |
       {{define "recent_executions"}}
-           LET recent_executions <= SELECT LastModified, Name, count(items=Name) As Count,
+           LET recent_executions &lt;= SELECT LastModified, Name, count(items=Name) As Count,
                   int(int=_LastModified/3600) AS Hour
            FROM source(source="InventoryApplicationFile")
            GROUP BY Hour
@@ -120,7 +120,7 @@ reports:
       binaries are grouped in an hour interval. The label is the first
       binary name and the total number of binaries within that hour.
 
-      > For clarity we hide the names of all other binaries, and just
+      &gt; For clarity we hide the names of all other binaries, and just
         show the total count.
 
       {{ Query "recent_executions" "timeline" | Timeline }}
@@ -130,4 +130,5 @@ reports:
 
       {{ Query "timeline" | Table }}
 
-```
+</code></pre>
+

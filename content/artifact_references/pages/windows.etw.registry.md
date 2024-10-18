@@ -22,7 +22,7 @@ seems to miss a lot of registry events.
 This artifact is experimental.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.ETW.Registry
 description: |
   Windows Registry access is a great source of visibility into system
@@ -56,8 +56,8 @@ parameters:
 
 sources:
 - query: |
-    LET Cache <= lru(size=1000)
-    LET EventLookup <= dict(
+    LET Cache &lt;= lru(size=1000)
+    LET EventLookup &lt;= dict(
         `1`="CreateKey",
         `2`="OpenKey",
         `3`="DeleteKey",
@@ -72,7 +72,9 @@ sources:
     LET registry_access = SELECT System, EventData,
        get(item=EventLookup, field=str(str=System.ID)) AS EventType,
        get(item=Cache, field=EventData.KeyObject) || EventData.KeyName AS KeyName
-    FROM watch_etw(guid="{70EB4F03-C1DE-4F73-A051-33D13D5413BD}", any=0x7720)
+    FROM watch_etw(
+      description="Microsoft-Windows-Kernel-Registry",
+      guid="{70EB4F03-C1DE-4F73-A051-33D13D5413BD}", any=0x7720)
     WHERE System.ProcessID != getpid() -- exclude ourselves
         AND EventType  -- we only care about these events
         AND if(condition=System.ID in (1, 2, 4),
@@ -93,4 +95,5 @@ sources:
     FROM hits
     WHERE ProcessName =~ ProcessRegex
 
-```
+</code></pre>
+

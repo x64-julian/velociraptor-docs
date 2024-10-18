@@ -12,7 +12,7 @@ HKEY_USERS\*\Software\Microsoft\Office\*\Outlook\Security\EnableUnsafeClientMail
 https://support.microsoft.com/en-us/help/3191893/how-to-control-the-rule-actions-to-start-an-application-or-run-a-macro
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Registry.EnableUnsafeClientMailRules
 description: |
   Checks for Outlook EnableUnsafeClientMailRules = 1 (turned on).
@@ -37,7 +37,7 @@ sources:
   - query: |
         LET UserProfiles = Select Name as Username,
             {
-                SELECT FullPath FROM glob(root=expand(path=Directory),
+                SELECT OSPath FROM glob(root=expand(path=Directory),
                    globs="/NTUSER.DAT", accessor="auto")
             } as NTUser,
             expand(path=Directory) as Directory
@@ -57,9 +57,10 @@ sources:
                 OutlookSecureTempFolder
               FROM read_reg_key(
                  globs=KeyGlob,
-                 root=pathspec(DelegatePath=FullPath),
+                 root=pathspec(DelegatePath=OSPath),
                  accessor="raw_reg")
               WHERE EnableUnsafeClientMailRules = 1
            })
 
-```
+</code></pre>
+

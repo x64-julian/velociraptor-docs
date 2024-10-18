@@ -9,7 +9,7 @@ device. The globs will be searched in one pass - so you can provide
 many globs at the same time.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Generic.Collectors.File
 description: |
    Collects files using a set of globs. All globs must be on the same
@@ -50,26 +50,29 @@ parameters:
 sources:
    - name: All Matches Metadata
      query: |
-      LET RootPath <= pathspec(Path=Root, accessor=Accessor)
+      LET RootPath &lt;= pathspec(Path=Root, accessor=Accessor)
 
       -- Generate the collection globs for each device
       LET specs = SELECT RootPath + Glob AS Glob
             FROM collectionSpec
-            WHERE log(message=format(format="Processing Device %v with %v: %v",
-                      args=[Root, Accessor, Glob]))
+            WHERE log(message=format(
+               format="Processing Device %v with %v: glob is %v",
+               args=[Root, Accessor, Glob]))
 
       -- Join all the collection rules into a single Glob plugin. This ensure we
       -- only make one pass over the filesystem. We only want LFNs.
-      LET hits = SELECT FullPath AS SourceFile, Size,
-               Ctime AS Created,
+      LET hits = SELECT OSPath AS SourceFile, Size,
+               Btime AS Created,
+               Ctime AS Changed,
                Mtime AS Modified,
                Atime AS LastAccessed
         FROM glob(globs=specs.Glob, accessor=Accessor)
         WHERE NOT IsDir AND log(message="Found " + SourceFile)
 
-      -- Pass all the results to the next query.
-      LET all_results <=
-         SELECT Created, LastAccessed, Modified, Size, SourceFile
+      -- Pass all the results to the next query. This will serialize
+      -- to disk if there are too many results.
+      LET all_results &lt;=
+         SELECT Created, Changed, LastAccessed, Modified, Size, SourceFile
          FROM hits
 
       SELECT * FROM all_results
@@ -82,7 +85,7 @@ sources:
         },
         workers=30,
         query={
-          SELECT Created, LastAccessed, Modified, SourceFile, Size,
+          SELECT Created, Changed, LastAccessed, Modified, SourceFile, Size,
                upload(file=SourceFile,
                       accessor=Accessor,
                       mtime=Modified) AS Upload
@@ -93,7 +96,8 @@ sources:
       SELECT now() AS CopiedOnTimestamp, SourceFile,
              Upload.Path AS DestinationFile,
                Size AS FileSize, Upload.sha256 AS SourceFileSha256,
-               Created, Modified, LastAccessed
+               Created, Changed, Modified, LastAccessed
         FROM uploaded_files
 
-```
+</code></pre>
+

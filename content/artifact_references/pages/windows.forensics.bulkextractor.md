@@ -40,7 +40,7 @@ endpoint.
 is not ideal from a forensic viewpoint.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Forensics.BulkExtractor
 description: |
     This content will execute bulk_extractor with record carving plugins from
@@ -115,10 +115,10 @@ parameters:
 
 sources:
   - query: |
-      LET bin <= SELECT *
+      LET bin &lt;= SELECT *
         FROM Artifact.Generic.Utils.FetchBinary(ToolName="Bulk_Extractor_Binary")
-      LET tempfolder <= tempdir()
-      LET ExePath <= tempfile(extension=".exe")
+      LET tempfolder &lt;= tempdir()
+      LET ExePath &lt;= tempfile(extension=".exe")
 
       LET target = SELECT
             DeviceID,
@@ -144,18 +144,18 @@ sources:
             },
             c={
                 SELECT
-                    regex_replace(source=FullPath,
+                    regex_replace(source=OSPath,
                         re="GLOBALROOT\\\\Device\\\\",replace="")AS DeviceID,
                     Data.ID AS ShadowCopyID,
-                    upcase(string=regex_replace(source=FullPath,
+                    upcase(string=regex_replace(source=OSPath,
                         re="GLOBALROOT\\\\Device\\\\",replace="")) as _DeviceID
                 FROM glob(globs='/*', accessor='ntfs')
                 WHERE ShadowCopyID AND TargetVSS
-                ORDER by FullPath
+                ORDER by OSPath
             })
             GROUP BY _DeviceID
 
-      LET cmdline = SELECT (bin[0].FullPath, '-q', '99999999999', '-R') +
+      LET cmdline = SELECT (bin[0].OSPath, '-q', '99999999999', '-R') +
                            CMD + '-o' as CMD FROM switch(
             a= {
                 SELECT commandline_split(command=FreeCommand) AS CMD
@@ -201,7 +201,7 @@ sources:
         },
         query={
             SELECT *
-            FROM split_records(filenames=FullPath,first_row_is_headers=false,
+            FROM split_records(filenames=OSPath,first_row_is_headers=false,
                 columns=['Location','Match','Data'],regex='\t')
             WHERE NOT Location =~ '#'
         })
@@ -209,9 +209,10 @@ sources:
 
   - name: Upload
     query: |
-      SELECT upload(file=FullPath,
-                    name=strip(string=FullPath,prefix=tempfolder)) AS Upload
+      SELECT upload(file=OSPath,
+                    name=strip(string=OSPath,prefix=tempfolder)) AS Upload
       FROM glob(globs="/**", root=tempfolder)
       WHERE Upload
 
-```
+</code></pre>
+

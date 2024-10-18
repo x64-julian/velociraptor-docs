@@ -34,7 +34,7 @@ This artifact is useful in the following scenarios:
     locate other similar files
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Search.FileFinder
 description: |
   Find files on the filesystem using the filename or content.
@@ -91,6 +91,7 @@ parameters:
       - registry
       - file
       - ntfs
+      - ntfs_vss
 
   - name: YaraRule
     type: yara
@@ -113,10 +114,15 @@ parameters:
     default: ""
     type: timestamp
 
+  - name: VSS_MAX_AGE_DAYS
+    type: int
+    description: |
+      If larger than 0 we restrict VSS age to this many days
+      ago. Otherwise we find all VSS.
 
 sources:
   - query: |
-      LET file_search = SELECT FullPath,
+      LET file_search = SELECT OSPath,
                get(item=Data, field="mft") as Inode,
                Mode.String AS Mode, Size,
                Mtime AS MTime,
@@ -131,15 +137,15 @@ sources:
         condition=MoreRecentThan,
         then={
           SELECT * FROM file_search
-          WHERE MTime > MoreRecentThan
+          WHERE MTime &gt; MoreRecentThan
         }, else=file_search)
 
       LET modified_before = SELECT * FROM if(
         condition=ModifiedBefore,
         then={
           SELECT * FROM more_recent
-          WHERE MTime < ModifiedBefore
-           AND  MTime > MoreRecentThan
+          WHERE MTime &lt; ModifiedBefore
+           AND  MTime &gt; MoreRecentThan
         }, else=more_recent)
 
       LET keyword_search = SELECT * FROM if(
@@ -151,23 +157,23 @@ sources:
                WHERE NOT IsDir
             },
             query={
-               SELECT FullPath, Inode, Mode,
+               SELECT OSPath, Inode, Mode,
                       Size, MTime, ATime, CTime, BTime,
                       str(str=String.Data) As Keywords, IsDir, Data
 
-               FROM yara(files=FullPath,
+               FROM yara(files=OSPath,
                          key="A",
                          rules=YaraRule,
                          accessor=Accessor)
             })
         }, else=modified_before)
 
-      SELECT FullPath, Inode, Mode, Size, MTime, ATime,
+      SELECT OSPath, Inode, Mode, Size, MTime, ATime,
              CTime, BTime, Keywords, IsDir,
                if(condition=Upload_File and NOT IsDir,
-                  then=upload(file=FullPath, accessor=Accessor)) AS Upload,
+                  then=upload(file=OSPath, accessor=Accessor)) AS Upload,
                if(condition=Calculate_Hash and NOT IsDir,
-                  then=hash(path=FullPath, accessor=Accessor)) AS Hash,
+                  then=hash(path=OSPath, accessor=Accessor)) AS Hash,
             Data
       FROM keyword_search
 
@@ -183,4 +189,5 @@ column_types:
   - name: Upload
     type: preview_upload
 
-```
+</code></pre>
+

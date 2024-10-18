@@ -10,7 +10,7 @@ This code is based on
 https://github.com/CrowdStrike/automactc/blob/master/modules/mod_autoruns_v102.py
 
 
-```yaml
+<pre><code class="language-yaml">
 name: MacOS.Detection.Autoruns
 description: |
    This artifact collects evidence of autoruns. We also capture the files and upload them.
@@ -59,39 +59,39 @@ parameters:
 sources:
 - name: Sandboxed Loginitems
   query: |
-    SELECT FullPath,
+    SELECT OSPath,
            Mtime,
-           plist(file=FullPath) AS Disabled,
-           upload(file=FullPath) AS Upload
+           plist(file=OSPath) AS Disabled,
+           upload(file=OSPath) AS Upload
     FROM glob(globs=sandboxed_loginitems)
 
 - name: crontabs
   query: |
     LET raw = SELECT * FROM foreach(
           row={
-            SELECT FullPath, Name, Mtime,
-                   upload(file=FullPath) AS Upload
+            SELECT OSPath, Name, Mtime,
+                   upload(file=OSPath) AS Upload
             FROM glob(globs=split(string=cronTabGlob, sep=","))
           },
           query={
-            SELECT FullPath, Name, Mtime, Upload,
+            SELECT OSPath, Name, Mtime, Upload,
               data, parse_string_with_regex(
                string=data,
                regex=[
                  /* Regex for event (Starts with @) */
-                 "^(?P<Event>@[a-zA-Z]+)\\s+(?P<Command>.+)",
+                 "^(?P&lt;Event&gt;@[a-zA-Z]+)\\s+(?P&lt;Command&gt;.+)",
 
                  /* Regex for regular command. */
-                 "^(?P<Minute>[^\\s]+)\\s+"+
-                 "(?P<Hour>[^\\s]+)\\s+"+
-                 "(?P<DayOfMonth>[^\\s]+)\\s+"+
-                 "(?P<Month>[^\\s]+)\\s+"+
-                 "(?P<DayOfWeek>[^\\s]+)\\s+"+
-                 "(?P<Command>.+)$"]) as Record
+                 "^(?P&lt;Minute&gt;[^\\s]+)\\s+"+
+                 "(?P&lt;Hour&gt;[^\\s]+)\\s+"+
+                 "(?P&lt;DayOfMonth&gt;[^\\s]+)\\s+"+
+                 "(?P&lt;Month&gt;[^\\s]+)\\s+"+
+                 "(?P&lt;DayOfWeek&gt;[^\\s]+)\\s+"+
+                 "(?P&lt;Command&gt;.+)$"]) as Record
 
             /* Read lines from the file and filter ones that start with "#" */
             FROM split_records(
-               filenames=FullPath,
+               filenames=OSPath,
                regex="\n", columns=["data"]) WHERE not data =~ "^\\s*#"
             }) WHERE Record.Command
 
@@ -104,55 +104,56 @@ sources:
                Record.Month AS Month,
                Record.DayOfWeek AS DayOfWeek,
                Record.Command AS Command,
-               FullPath AS Path,
+               OSPath AS Path,
                Upload
     FROM raw
 
 - name: LaunchAgentsDaemons
   query: |
 
-    LET launchd_config = SELECT FullPath, Mtime,
-           plist(file=FullPath) AS LaunchdConfig,
-           upload(file=FullPath) AS Upload
+    LET launchd_config = SELECT OSPath, Mtime,
+           plist(file=OSPath) AS LaunchdConfig,
+           upload(file=OSPath) AS Upload
     FROM glob(globs=parse_json_array(data=LaunchAgentsDaemonsGlob))
 
-    LET programs = SELECT FullPath, Mtime, LaunchdConfig,
+    LET programs = SELECT OSPath, Mtime, LaunchdConfig,
            get(member="LaunchdConfig.Program",
                default=get(member="LaunchdConfig.ProgramArguments.0")) AS Program
     FROM launchd_config
 
-    SELECT FullPath, Mtime, LaunchdConfig,
+    SELECT OSPath, Mtime, LaunchdConfig,
            Program, hash(path=Program) AS Hash,
-           upload(file=FullPath) AS Upload
+           upload(file=OSPath) AS Upload
     FROM programs
 
 - name: ScriptingAdditions
   query: |
-    SELECT FullPath,
+    SELECT OSPath,
            Mtime,
-           upload(file=FullPath) AS Upload
+           upload(file=OSPath) AS Upload
     FROM glob(globs=parse_json_array(data=ScriptingAdditionsGlobs))
 
 - name: StartupItems
   query: |
-    SELECT FullPath,
+    SELECT OSPath,
            Mtime,
-           upload(file=FullPath) AS Upload
+           upload(file=OSPath) AS Upload
     FROM glob(globs=parse_json_array(data=StartupItemsGlobs))
 
 - name: MiscItems
   query: |
-    SELECT FullPath,
+    SELECT OSPath,
            Mtime,
-           upload(file=FullPath) AS Upload
+           upload(file=OSPath) AS Upload
     FROM glob(globs=parse_json_array(data=MiscItemsGlobs))
 
 - name: LoginItems
   query: |
-    SELECT FullPath,
+    SELECT OSPath,
            Mtime,
-           plist(file=FullPath) AS LoginItemConfig,
-           upload(file=FullPath) AS Upload
+           plist(file=OSPath) AS LoginItemConfig,
+           upload(file=OSPath) AS Upload
     FROM glob(globs=parse_json_array(data=LoginItemsGlobs))
 
-```
+</code></pre>
+

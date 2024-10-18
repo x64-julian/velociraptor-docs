@@ -13,7 +13,7 @@ If you run it yourself (or via the API) the results will also be
 shown in the VFS view.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: System.VFS.DownloadFile
 description: |
   This is an internal artifact used by the GUI to populate the
@@ -42,20 +42,20 @@ parameters:
 sources:
   - query: |
       LET download_one_file = if(
-         condition=version(plugin="stat") > 1,
+         condition=version(plugin="stat") &gt; 1,
          then= {
            SELECT OSPath AS Path, Accessor,
               Size, upload(file=OSPath, accessor=Accessor) AS Upload
            FROM stat(filename=Components, accessor=Accessor)
         },
         else= {
-           SELECT FullPath AS Path, Accessor,
-              Size, upload(file=FullPath, accessor=Accessor) AS Upload
+           SELECT OSPath AS Path, Accessor,
+              Size, upload(file=OSPath, accessor=Accessor) AS Upload
           FROM stat(filename=Path, accessor=Accessor)
         })
 
       LET download_recursive = if(
-         condition=version(plugin="stat") > 1,
+         condition=version(plugin="stat") &gt; 1,
          then= {
            SELECT OSPath AS Path, Accessor,
               Size, upload(file=OSPath, accessor=Accessor) AS Upload
@@ -64,8 +64,8 @@ sources:
            WHERE Mode.IsRegular
         },
         else={
-          SELECT FullPath AS Path, Accessor,
-            Size, upload(file=FullPath, accessor=Accessor) AS Upload
+          SELECT OSPath AS Path, Accessor,
+            Size, upload(file=OSPath, accessor=Accessor) AS Upload
           FROM glob(globs="**", root=Path, accessor=Accessor)
           WHERE Mode.IsRegular
        })
@@ -81,4 +81,5 @@ sources:
         then={ SELECT * FROM download_recursive},
         else={ SELECT * FROM download_one_file})
 
-```
+</code></pre>
+

@@ -24,6 +24,7 @@ accessor|The accessor to use|string
 dest|The destination file to write.|string (required)
 permissions|Required permissions (e.g. 'x').|string
 append|If true we append to the target file otherwise truncate it|bool
+create_directories|If true we ensure the destination directories exist|bool
 
 Required Permissions: 
 <i class="linkcolour label pull-right label-success">FILESYSTEM_WRITE</i>
@@ -39,7 +40,7 @@ example is to extract a file from a zip file using the `zip`
 accessor into a file on disk.
 
 This function can also be used to create new files with prescribed
-content - for example:
+content, for example:
 
 ```vql
 SELECT copy(filename="Hello world", accessor="data", dest="C:/hi.txt")

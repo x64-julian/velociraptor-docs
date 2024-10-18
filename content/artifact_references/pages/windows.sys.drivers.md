@@ -8,7 +8,7 @@ Details for in-use Windows device drivers. This does not display
 installed but unused drivers.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Sys.Drivers
 description: |
   Details for in-use Windows device drivers. This does not display
@@ -22,6 +22,12 @@ parameters:
     type: bool
     description: If selected we also check the authenticode information.
     default: "Y"
+
+  - name: DISABLE_DANGEROUS_API_CALLS
+    type: bool
+    description: |
+      Enable this to disable potentially flakey APIs which may cause
+      crashes.
 
 sources:
   - name: SignedDrivers
@@ -58,4 +64,5 @@ sources:
           WHERE NOT Issuer =~ "Microsoft"
           GROUP BY Issuer
 
-```
+</code></pre>
+

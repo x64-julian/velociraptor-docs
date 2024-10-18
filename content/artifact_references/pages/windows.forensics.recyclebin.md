@@ -27,7 +27,7 @@ The second file begins with `$I` and ends in the same string as the
 Limitations: This artifact uses the API to read available $I data. There may be additional unallocated but readable $I files referenced in the MFT that may be recoverable.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Forensics.RecycleBin
 description: |
   This artefact will parse the `$I` files found in the `$Recycle.Bin` folder to
@@ -51,7 +51,7 @@ description: |
   `$R` file – this file contains the metadata for that specific file
 
   Limitations: This artifact uses the API to read available $I data. There may be additional unallocated but readable $I files referenced in the MFT that may be recoverable.
-  
+
 author: "Zach Stanford - @svch0st"
 
 reference:
@@ -73,7 +73,7 @@ sources:
   - query: |
         SELECT * FROM foreach(
               row={
-                 SELECT FullPath FROM glob(globs=RecycleBinGlobs)
+                 SELECT OSPath FROM glob(globs=RecycleBinGlobs)
               },
               query={
                 SELECT
@@ -81,13 +81,14 @@ sources:
                     Name,
                     FilePath as OriginalFilePath,
                     FileSize,
-                    FullPath,
-                    regex_replace(source=FullPath, re="\\\\\\$I", replace="\\$$R") AS RecyclePath,
+                    OSPath,
+                    regex_replace(source=OSPath, re="\\\\\\$I", replace="\\$$R") AS RecyclePath,
                     if(condition=AlsoUpload, then=upload(
-                         file=regex_replace(source=FullPath, re="\\\\\\$I", replace="\\$$R"),
+                         file=regex_replace(source=OSPath, re="\\\\\\$I", replace="\\$$R"),
                          name=FilePath
                     )) AS Upload
-                 FROM parse_recyclebin(filename=FullPath)
+                 FROM parse_recyclebin(filename=OSPath)
               })
 
-```
+</code></pre>
+

@@ -7,7 +7,7 @@ tags: [Client Artifact]
 Parses the auth logs to determine all SSH login attempts.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Linux.Syslog.SSHLogin
 description: |
   Parses the auth logs to determine all SSH login attempts.
@@ -23,7 +23,7 @@ parameters:
 
   - name: SSHGrok
     description: A Grok expression for parsing SSH auth lines.
-    default: >-
+    default: &gt;-
       %{SYSLOGTIMESTAMP:Timestamp} (?:%{SYSLOGFACILITY} )?%{SYSLOGHOST:logsource} %{SYSLOGPROG}: %{DATA:event} %{DATA:method} for (invalid user )?%{DATA:user} from %{IPORHOST:ip} port %{NUMBER:port} ssh2(: %{GREEDYDATA:system.auth.ssh.signature})?
 
 sources:
@@ -34,14 +34,15 @@ sources:
                Event.event AS Result,
                Event.method AS Method,
                Event.user AS AttemptedUser,
-               FullPath
+               OSPath
         FROM foreach(
           row={
-              SELECT FullPath FROM glob(globs=syslogAuthLogPath)
+              SELECT OSPath FROM glob(globs=syslogAuthLogPath)
           }, query={
-              SELECT grok(grok=SSHGrok, data=Line) AS Event, FullPath
-              FROM parse_lines(filename=FullPath)
+              SELECT grok(grok=SSHGrok, data=Line) AS Event, OSPath
+              FROM parse_lines(filename=OSPath)
               WHERE Event.program = "sshd"
           })
 
-```
+</code></pre>
+

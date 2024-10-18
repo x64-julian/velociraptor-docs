@@ -7,7 +7,7 @@ tags: [Client Artifact]
 This artifact enables running Yara over processes in memory.
 
 There are 2 kinds of Yara rules that can be deployed:
- 
+
 1. Url link to a yara rule.
 3. or a Standard Yara rule attached as a parameter.
 
@@ -23,17 +23,17 @@ If upload is selected NumberOfHits is redundant and not advised as hits are
 grouped by path to ensure files only downloaded once.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Detection.Yara.Process
 author: Matt Green - @mgreen27
 description: |
   This artifact enables running Yara over processes in memory.
 
   There are 2 kinds of Yara rules that can be deployed:
-   
+
   1. Url link to a yara rule.
   3. or a Standard Yara rule attached as a parameter.
-  
+
   Only one method of Yara will be applied and search order is as above. The
   default is Cobalt Strike opcodes.
 
@@ -44,7 +44,7 @@ description: |
   show one string in returned rows.
   If upload is selected NumberOfHits is redundant and not advised as hits are
   grouped by path to ensure files only downloaded once.
-  
+
 
 type: CLIENT
 parameters:
@@ -114,8 +114,8 @@ sources:
 
     query: |
       -- check which Yara to use
-      LET yara_rules <= YaraUrl || YaraRule
-
+      LET yara_rules &lt;= YaraUrl || YaraRule
+      
       -- find velociraptor process
       LET me = SELECT Pid FROM pslist(pid=getpid())
 
@@ -138,8 +138,8 @@ sources:
                 ExePath,
                 CommandLine,
                 Pid,
-                Namespace,
                 Rule,
+                Tags,
                 Meta,
                 String.Name as YaraString,
                 String.Offset as HitOffset,
@@ -150,37 +150,38 @@ sources:
                         split(string=ProcessName, sep='\\.')[0], Pid,
                         String.Offset ]
                     )) as HitContext
-             FROM yara(
-                files=format(format="/%d", args=Pid),
-                accessor='process',
-                rules=yara_rules,
-                context=ContextBytes,
-                number=NumberOfHits)
+                
+            FROM proc_yara(
+                            pid=int(int=Pid),
+                            rules=yara_rules,
+                            context=ContextBytes,
+                            number=NumberOfHits
+                        )
           })
 
       -- upload hits using proc_dump plugin
       LET upload_hits = SELECT * FROM foreach(
         row=hits,
         query={
-            SELECT
+            SELECT 
                 ProcessName,
                 ExePath,
                 CommandLine,
                 Pid,
-                Namespace,
                 Rule,
+                Tags,
                 Meta,
                 YaraString,
                 HitOffset,
                 HitContext,
                 upload(
-                  file=FullPath,
+                  file=OSPath,
                   name=format(format='%v-%v.dmp',
                     args= [ split(string=ProcessName, sep='\\.')[0], Pid ])
                 ) as ProcessDump
             FROM proc_dump(pid=Pid)
           })
-
+          
       -- return rows
       SELECT * FROM if(condition=UploadHits,
         then=upload_hits,
@@ -189,5 +190,5 @@ sources:
 column_types:
   - name: HitContext
     type: preview_upload
+</code></pre>
 
-```

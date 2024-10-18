@@ -7,7 +7,7 @@ tags: [Client Artifact]
 This artifact collects information about MacOS Time Machine backups.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: MacOS.System.TimeMachine
 description: |
   This artifact collects information about MacOS Time Machine backups.
@@ -22,19 +22,20 @@ parameters:
 
 sources:
   - query: |
-      LET TMPlist = SELECT FullPath FROM glob(globs=TimeMachineGlob)
+      LET TMPlist = SELECT OSPath FROM glob(globs=TimeMachineGlob)
       LET TMDetails =
             SELECT * FROM foreach(
-                row=plist(file=FullPath),
+                row=plist(file=OSPath),
                 query={ SELECT
-                    plist(file=FullPath).LocalizedDiskImageVolumeName AS VolumeName,
-                    plist(file=FullPath).AutoBackup AS AutoBackup,
-                    plist(file=FullPath).LastDestinationID AS LastDestination,
-                    plist(file=FullPath).HostUUIDs[0] AS HostUUID,
-                    plist(file=FullPath).Destinations AS Destinations
+                    plist(file=OSPath).LocalizedDiskImageVolumeName AS VolumeName,
+                    plist(file=OSPath).AutoBackup AS AutoBackup,
+                    plist(file=OSPath).LastDestinationID AS LastDestination,
+                    plist(file=OSPath).HostUUIDs[0] AS HostUUID,
+                    plist(file=OSPath).Destinations AS Destinations
                     FROM scope()
                 }
             )
       SELECT * FROM foreach(row=TMPlist, query=TMDetails)
 
-```
+</code></pre>
+

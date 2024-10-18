@@ -8,7 +8,7 @@ This artifact will parse /proc and reveal information
 about current network connections.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Linux.Network.Netstat
 description: |
    This artifact will parse /proc and reveal information
@@ -19,7 +19,7 @@ type: CLIENT
 parameters:
    - name: StateRegex
      type: regex
-     default: "Listening|Established"
+     default: "LISTEN|ESTAB"
      description: Only show these states
 
 sources:
@@ -42,7 +42,7 @@ sources:
         )
 
         -- https://elixir.bootlin.com/linux/latest/source/include/net/tcp_states.h#L14
-        LET StateLookup <= dict(
+        LET StateLookup &lt;= dict(
            `01`="Established",
            `02`="Syn Sent",
            `06`="Time Wait", -- No owner process
@@ -51,14 +51,14 @@ sources:
 
         -- Enumerate all the sockets and cache them in memory for
         -- reverse lookup. The following is basically lsof.
-        LET X = SELECT split(string=FullPath, sep="/")[2] AS Pid,
+        LET X = SELECT OSPath[1] AS Pid,
                Data.Link AS Filename,
                parse_string_with_regex(
                   string=Data.Link,
-                  regex="(?P<Type>socket|pipe):\\[(?P<inode>[0-9]+)\\]") AS Details
+                  regex="(?P&lt;Type&gt;socket|pipe):\\[(?P&lt;inode&gt;[0-9]+)\\]") AS Details
         FROM glob(globs="/proc/*/fd/*")
 
-        LET AllSockets <= SELECT atoi(string=Pid) AS Pid,
+        LET AllSockets &lt;= SELECT atoi(string=Pid) AS Pid,
                read_file(filename="/proc/" + Pid + "/comm") AS Command,
                read_file(filename="/proc/" + Pid + "/cmdline") AS CommandLine,
                Filename,
@@ -84,4 +84,5 @@ sources:
         WHERE sl =~ ":"  -- Remove header row
           AND State =~ StateRegex
 
-```
+</code></pre>
+

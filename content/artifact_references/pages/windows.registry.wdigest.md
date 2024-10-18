@@ -27,7 +27,7 @@ added. The existence of the key is suspicious, if not expected.
 * ATT&CK technique: T1112, T1003.001
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Registry.WDigest
 author: Eduardo Mattos - @eduardfir, Matt Green - @mgreen27
 description: |
@@ -50,8 +50,8 @@ description: |
     “UseLogonCredential” DWORD value, so the key needs to be
     added. The existence of the key is suspicious, if not expected.
 
-    * ATT&CK tactic: Defense Evasion, Credential Access
-    * ATT&CK technique: T1112, T1003.001
+    * ATT&amp;CK tactic: Defense Evasion, Credential Access
+    * ATT&amp;CK technique: T1112, T1003.001
 
 reference:
     - https://medium.com/blue-team/preventing-mimikatz-attacks-ed283e7ebdd5
@@ -73,7 +73,7 @@ sources:
   - query: |
         SELECT
             ModTime as LastModified,
-            FullPath as KeyPath,
+            OSPath as KeyPath,
             Name as KeyName,
             Data.type as KeyType,
             Data.value as KeyValue
@@ -84,11 +84,12 @@ sources:
                         then= False,
                         else= KeyValue = 0)
         GROUP BY LastModified, KeyName, KeyType, KeyValue,
-            regex_replace(source=FullPath,
+            regex_replace(source=OSPath,
                 re='''[^\\]+ControlSet[^\\]+''',replace='CurrentControlSet')
 
 column_types:
   - name: LastModified
     type: timestamp
 
-```
+</code></pre>
+

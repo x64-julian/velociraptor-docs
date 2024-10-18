@@ -7,22 +7,12 @@ tags: [Server Artifact]
 This artifact returns the total list of clients, their hostnames and
 the last times they were seen.
 
-We also include a list of usernames on this machine, as gathered by
-the last Windows.Sys.Users artifact that was collected. Note that
-the list of usernames may be outdated if that artifact was not
-collected recently.
 
-
-```yaml
+<pre><code class="language-yaml">
 name: Server.Information.Clients
 description: |
   This artifact returns the total list of clients, their hostnames and
   the last times they were seen.
-
-  We also include a list of usernames on this machine, as gathered by
-  the last Windows.Sys.Users artifact that was collected. Note that
-  the list of usernames may be outdated if that artifact was not
-  collected recently.
 
 type: SERVER
 
@@ -38,4 +28,5 @@ sources:
         FROM clients(count=100000)
         ORDER BY _LastSeenAt DESC
 
-```
+</code></pre>
+

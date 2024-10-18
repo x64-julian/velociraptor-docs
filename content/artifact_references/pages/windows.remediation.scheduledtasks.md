@@ -9,7 +9,7 @@ Remove malicious task from the Windows scheduled task list.
 Danger: You need to make sure to test this before running.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Remediation.ScheduledTasks
 description: |
    Remove malicious task from the Windows scheduled task list.
@@ -44,19 +44,19 @@ sources:
       SELECT OS From info() where OS = 'windows'
 
     query: |
-      LET task_paths = SELECT Name, FullPath
+      LET task_paths = SELECT Name, OSPath
         FROM glob(globs=TasksPath)
         WHERE NOT IsDir
 
-      LET parse_task = select FullPath, Name, parse_xml(
+      LET parse_task = select OSPath, Name, parse_xml(
                accessor='data',
                file=regex_replace(
                     source=utf16(string=Data),
-                    re='<[?].+?>',
+                    re='&lt;[?].+?&gt;',
                     replace='')) AS XML
-      FROM read_file(filenames=FullPath)
+      FROM read_file(filenames=OSPath)
 
-      LET tasks = SELECT FullPath, Name,
+      LET tasks = SELECT OSPath, Name,
             XML.Task.Actions.Exec.Command as Command,
             XML.Task.Actions.Exec.Arguments as Arguments,
             XML.Task.Actions.ComHandler.ClassId as ComHandler,
@@ -70,16 +70,17 @@ sources:
         query={
           SELECT * FROM if(condition= ReallyDoIt='Y',
             then={
-              SELECT FullPath, Name, Command, Arguments, ComHandler, UserId, _XML
+              SELECT OSPath, Name, Command, Arguments, ComHandler, UserId, _XML
               FROM execve(argv=[PowerShellExe,
                  "-ExecutionPolicy", "Unrestricted", "-encodedCommand",
                     base64encode(string=utf16_encode(
                     string=format(format=script, args=[Name])))
               ])
             }, else={
-              SELECT FullPath, Name, Command, Arguments, ComHandler, UserId, _XML
+              SELECT OSPath, Name, Command, Arguments, ComHandler, UserId, _XML
               FROM scope()
             })
         })
 
-```
+</code></pre>
+

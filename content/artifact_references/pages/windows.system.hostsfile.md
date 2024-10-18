@@ -6,20 +6,20 @@ tags: [Client Artifact]
 
 Parses the Windows Hostsfile.
 
-Regex searching for Hostname and resolutin is enabled over output.
+Regex searching for Hostname and resolution is enabled over output.
 NOTE: For Hostname search is on the hostfile line and regex ^ or $
-is not reccomended.
+is not recommended.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.System.HostsFile
 author: Matt Green - @mgreen27
 description: |
    Parses the Windows Hostsfile.
 
-   Regex searching for Hostname and resolutin is enabled over output.
+   Regex searching for Hostname and resolution is enabled over output.
    NOTE: For Hostname search is on the hostfile line and regex ^ or $
-   is not reccomended.
+   is not recommended.
 
 type: CLIENT
 
@@ -51,9 +51,9 @@ sources:
                     SELECT parse_string_with_regex(
                         string=_value,
                         regex=[
-                            "^\\s*(?P<Resolution>[^\\s]+)\\s+" +
-                            "(?P<Hostname>[^\\#]+)\\s*" +
-                            "#*\\s*(?P<Comment>.*)$"
+                            "^\\s*(?P&lt;Resolution&gt;[^\\s]+)\\s+" +
+                            "(?P&lt;Hostname&gt;[^\\#]+)\\s*" +
+                            "#*\\s*(?P&lt;Comment&gt;.*)$"
                         ]) as Record
                     FROM foreach(row=List)
                     WHERE _value
@@ -77,4 +77,5 @@ sources:
         Record.Comment AS Comment
       FROM results
 
-```
+</code></pre>
+

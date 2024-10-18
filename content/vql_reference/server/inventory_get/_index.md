@@ -20,6 +20,8 @@ no_edit: true
 Arg | Description | Type
 ----|-------------|-----
 tool||string (required)
+version||string
+probe|If specified we only probe the tool definition without materializing|bool
 
 Required Permissions: 
 <i class="linkcolour label pull-right label-success">SERVER_ADMIN</i>

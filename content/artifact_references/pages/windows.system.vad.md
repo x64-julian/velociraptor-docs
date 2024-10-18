@@ -14,11 +14,11 @@ or by content with yara.
 NOTE:
 
  - ProtectionChoice is a choice to filter on section protection. Default is
-all sections and ProtectionRegex can override selection.   
+all sections and ProtectionRegex can override selection.
 - To filter on unmapped sections the MappingNameRegex: ^$ can be used.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.System.VAD
 author: "Matt Green - @mgreen27"
 description: |
@@ -30,9 +30,9 @@ description: |
   or by content with yara.
 
   NOTE:
-  
+
    - ProtectionChoice is a choice to filter on section protection. Default is
-  all sections and ProtectionRegex can override selection.   
+  all sections and ProtectionRegex can override selection.
   - To filter on unmapped sections the MappingNameRegex: ^$ can be used.
 
 parameters:
@@ -72,7 +72,7 @@ sources:
   - query: |
       -- firstly find processes in scope
       LET processes = SELECT int(int=Pid) AS Pid,
-              Name, Exe, CommandLine, CreateTime
+              Name, Exe, CommandLine, StartTime
         FROM process_tracker_pslist()
         WHERE Name =~ ProcessRegex
             AND format(format="%d", args=Pid) =~ PidRegex
@@ -82,7 +82,7 @@ sources:
       LET sections = SELECT * FROM foreach(
           row=processes,
           query={
-            SELECT CreateTime as ProcessCreateTime,Pid, Name,MappingName  ,
+            SELECT StartTime as ProcessCreateTime,Pid, Name, MappingName,
                 format(format='%x-%x', args=[Address, Address+Size]) AS AddressRange,
                 Address as _Address,
                 State,Type,ProtectionMsg,Protection,
@@ -125,10 +125,10 @@ sources:
                             name=format(format="%v-%v_%v.bin-%v-%v",
                             args=[
                                 Name, Pid, AddressRange,
-                                if(condition= String.Offset - ContextBytes < 0,
+                                if(condition= String.Offset - ContextBytes &lt; 0,
                                     then= 0,
                                     else= String.Offset - ContextBytes),
-                                if(condition= String.Offset + ContextBytes > SectionSize,
+                                if(condition= String.Offset + ContextBytes &gt; SectionSize,
                                     then= SectionSize,
                                     else= String.Offset + ContextBytes ) ])
                             ) as HitContext,
@@ -172,4 +172,5 @@ column_types:
   - name: HitContext
     type: preview_upload
 
-```
+</code></pre>
+

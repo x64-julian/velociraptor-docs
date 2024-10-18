@@ -18,7 +18,7 @@ There are several parameter's available for search leveraging regex.
 - UploadFiles enables upload ConsoleHost_history.txt in scope
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.System.Powershell.PSReadline
 description: |
   This Artifact will search and extract lines from PSReadline history file.
@@ -66,11 +66,11 @@ sources:
   - query: |
         -- First extract target ConsoleHost_history path for each user
         LET targets = SELECT Name as Username,
-           { SELECT Mtime, Atime, Ctime, Btime, Size, FullPath
+           { SELECT Mtime, Atime, Ctime, Btime, Size, OSPath
              FROM stat(filename=expand(path=Directory) + ConsoleHostHistory)
            } AS Stat
         FROM Artifact.Windows.Sys.Users()
-        WHERE Directory and Username =~ UserRegex AND Stat.FullPath
+        WHERE Directory and Username =~ UserRegex AND Stat.OSPath
 
         -- Extract targets PSReadline entries
         SELECT * FROM foreach(
@@ -79,8 +79,8 @@ sources:
             SELECT Stat, count() AS LineNum,
                    Line,
                    Username,
-                   Stat.FullPath AS FullPath
-            FROM parse_lines(filename=Stat.FullPath)
+                   Stat.OSPath AS OSPath
+            FROM parse_lines(filename=Stat.OSPath)
             WHERE LineNum
              AND Line =~ SearchStrings
              AND NOT if(condition=StringWhiteList,
@@ -95,8 +95,9 @@ sources:
             then={
                 SELECT
                     Username,
-                    upload(file=Stat.FullPath) as ConsoleHost_history
+                    upload(file=Stat.OSPath) as ConsoleHost_history
                 FROM targets
             })
 
-```
+</code></pre>
+

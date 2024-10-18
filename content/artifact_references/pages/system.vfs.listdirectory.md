@@ -10,7 +10,7 @@ launched by the GUI when a user clicks the "Refresh this directory"
 button.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: System.VFS.ListDirectory
 description: |
   This is an internal artifact used by the GUI to populate the
@@ -48,7 +48,7 @@ sources:
     name: Listing
     description: File listing of multiple directories in a single table.
     query: |
-      SELECT FullPath AS _FullPath,
+      SELECT OSPath AS _OSPath,
              Components AS _Components,
              Accessor AS _Accessor,
              Data AS _Data,
@@ -75,13 +75,13 @@ sources:
 
   - precondition: SELECT * FROM info() WHERE NOT version(plugin="vfs_ls")
     query: |
-      // Glob > v2 accepts a component list for the root parameter.
-      LET Path <= if(condition=version(plugin="glob") > 2 AND Components,
+      // Glob &gt; v2 accepts a component list for the root parameter.
+      LET Path &lt;= if(condition=version(plugin="glob") &gt; 2 AND Components,
         then=Components, else=Path)
 
       // Old versions do not have the root parameter to glob()
       // Fixes https://github.com/Velocidex/velociraptor/issues/322
-      LET LegacyQuery = SELECT FullPath as _FullPath,
+      LET LegacyQuery = SELECT OSPath as _OSPath,
            Accessor as _Accessor,
            Data as _Data,
            Name, Size, Mode.String AS Mode,
@@ -92,7 +92,7 @@ sources:
              then=format(format='/**%v', args=Depth), else='/*'),
              accessor=Accessor)
 
-      LET NewQuery = SELECT FullPath as _FullPath,
+      LET NewQuery = SELECT OSPath as _OSPath,
            Accessor as _Accessor,
            Data as _Data,
            Name, Size, Mode.String AS Mode,
@@ -108,8 +108,9 @@ sources:
              accessor=Accessor)
 
       SELECT * FROM if(
-       condition=version(plugin="glob") >= 1,
+       condition=version(plugin="glob") &gt;= 1,
        then=NewQuery,
        else=LegacyQuery)
 
-```
+</code></pre>
+

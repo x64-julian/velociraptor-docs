@@ -7,7 +7,7 @@ tags: [Client Artifact]
 Run arbitrary VQL on the endpoint.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Generic.Client.VQL
 description: |
   Run arbitrary VQL on the endpoint.
@@ -21,6 +21,7 @@ parameters:
 
 sources:
   - query: |
-      SELECT * FROM query(query=Command)
+      SELECT * FROM query(query=Command, env=dict(config=config))
 
-```
+</code></pre>
+

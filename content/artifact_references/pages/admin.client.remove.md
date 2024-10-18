@@ -10,7 +10,7 @@ while.  All data for these clients will be removed.
 The artifact enumerates all the files that are removed.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Admin.Client.Remove
 description: |
   This artifact will remove clients that have not checked in for a
@@ -24,15 +24,17 @@ parameters:
   - name: Age
     description: Remove clients older than this many days
     default: "7"
+    type: int
 
   - name: ReallyDoIt
     type: bool
 
 sources:
   - query: |
+      LET Threshold &lt;= timestamp(epoch=now() - Age * 3600 * 24 )
       LET old_clients = SELECT os_info.fqdn AS Fqdn, client_id,
-             timestamp(epoch=last_seen_at/1000000) AS LastSeen FROM clients()
-      WHERE LastSeen < now() - ( atoi(string=Age) * 3600 * 24 )
+             timestamp(epoch=last_seen_at) AS LastSeen FROM clients()
+      WHERE LastSeen &lt; Threshold
 
       SELECT * FROM foreach(row=old_clients,
       query={
@@ -40,4 +42,5 @@ sources:
              client_id=client_id, really_do_it=ReallyDoIt)
       })
 
-```
+</code></pre>
+

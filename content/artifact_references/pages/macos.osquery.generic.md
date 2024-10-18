@@ -10,7 +10,7 @@ three supported Velociraptor platform (Windows/Linux/MacOS).
 You can read more about OSQuery on https://osquery.io/
 
 
-```yaml
+<pre><code class="language-yaml">
 name: MacOS.OSQuery.Generic
 description: |
   OSQuery is an excellent tool for querying system state across the
@@ -39,11 +39,11 @@ parameters:
 
 sources:
   - query: |
-      LET binary <= SELECT FullPath
+      LET binary &lt;= SELECT OSPath
       FROM Artifact.Generic.Utils.FetchBinary(ToolName="OSQueryDarwin")
 
       LET result = SELECT * FROM execve(
-         argv=[binary[0].FullPath, "--json", Query],
+         argv=[binary[0].OSPath, "--json", Query],
          length=1000000)
 
       SELECT * FROM foreach(row=result,
@@ -51,4 +51,5 @@ sources:
          SELECT * FROM parse_json_array(data=Stdout)
       })
 
-```
+</code></pre>
+

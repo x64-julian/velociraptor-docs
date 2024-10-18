@@ -6,7 +6,7 @@ tags: [Client Event Artifact]
 
 An Event artifact which generates client's CPU and memory statistics.
 
-```yaml
+<pre><code class="language-yaml">
 name: Generic.Client.Stats
 description: An Event artifact which generates client's CPU and memory statistics.
 parameters:
@@ -32,6 +32,26 @@ sources:
            FROM pslist(pid=getpid())
          })
 
+    notebook:
+      - type: vql_suggestion
+        name: Graph CPU usage
+        template: |
+          /*
+          # Events from Generic.Client.Stats
+          */
+          LET StartTime &lt;= "2024-03-20T16:33:38Z"
+          LET EndTime &lt;= "2024-03-20T20:01:37Z"
+
+          LET resources = SELECT Timestamp, rate(x=CPU, y=Timestamp) * 100 As CPUPercent,
+               RSS / 1000000 AS MemoryUse
+          FROM source()
+          WHERE CPUPercent &gt;= 0
+          /*
+            {{ Query "SELECT * FROM resources" | LineChart "xaxis_mode" "time" "RSS.yaxis" 2 }}
+          */
+          SELECT * FROM resources
+          LIMIT 50
+
   - precondition: SELECT OS From info() where OS != 'windows'
     query: |
       SELECT *, rate(x=CPU, y=Timestamp) AS CPUPercent
@@ -55,7 +75,7 @@ reports:
            SELECT Timestamp, rate(x=CPU, y=Timestamp) * 100 As CPUPercent,
                   RSS / 1000000 AS MemoryUse
            FROM source()
-           WHERE CPUPercent >= 0
+           WHERE CPUPercent &gt;= 0
       {{ end }}
 
       {{ Query "resources" | LineChart "xaxis_mode" "time" "RSS.yaxis" 2 }}
@@ -66,7 +86,7 @@ reports:
            SELECT Timestamp, rate(x=CPU, y=Timestamp) * 100 As CPUPercent,
                   RSS / 1000000 AS MemoryUse
            FROM source()
-           WHERE CPUPercent >= 0
+           WHERE CPUPercent &gt;= 0
       {{ end }}
 
       {{ $client_info := Query "SELECT * FROM clients(client_id=ClientId) LIMIT 1" }}
@@ -86,9 +106,9 @@ reports:
       idle, but if a heavy hunt is running this might climb
       substantially.
 
-        <div>
+        &lt;div&gt;
         {{ Query "resources" | LineChart "xaxis_mode" "time" "RSS.yaxis" 2 }}
-        </div>
+        &lt;/div&gt;
 
       ## VQL Query
 
@@ -98,7 +118,7 @@ reports:
       {{ template "resources" }}
       ```
 
-      > To learn about managing end point performance with Velociraptor see
+      &gt; To learn about managing end point performance with Velociraptor see
         the [blog post](https://docs.velociraptor.velocidex.com/blog/html/2019/02/10/velociraptor_performance.html).
 
 column_types:
@@ -108,4 +128,5 @@ column_types:
   - name: ClientId
     type: client_id
 
-```
+</code></pre>
+

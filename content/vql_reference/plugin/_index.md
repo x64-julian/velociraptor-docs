@@ -55,6 +55,7 @@ or in condition clauses (i.e. after the `WHERE` keyword).
 |[js_set](js_set)|<span class='vql_type'>Function</span>|Set a variables value in the JS VM|
 |[magic](magic)|<span class='vql_type'>Function</span>|Identify a file using magic rules|
 |[netcat](netcat)|<span class='vql_type'>Plugin</span>|Make a tcp connection and read data from a socket|
+|[netstat](netstat)|<span class='vql_type'>Plugin</span>|Collect network information|
 |[pathspec](pathspec)|<span class='vql_type'>Function</span>|Create a structured path spec to pass to certain accessors|
 |[pipe](pipe)|<span class='vql_type'>Function</span>|A pipe allows plugins that use files to read data from a vql|
 |[profile](profile)|<span class='vql_type'>Plugin</span>|Returns a profile dump from the running process|
@@ -67,7 +68,7 @@ or in condition clauses (i.e. after the `WHERE` keyword).
 |[scope](scope)|<span class='vql_type'>Plugin</span>|The scope plugin returns the current scope as a single row|
 |[sql](sql)|<span class='vql_type'>Plugin</span>|Run queries against sqlite, mysql, and postgres databases|
 |[stat](stat)|<span class='vql_type'>Plugin</span>|Get file information|
-|[switch](switch)|<span class='vql_type'>Plugin</span>|Executes each query|
+|[switch](switch)|<span class='vql_type'>Plugin</span>|Conditional execution of multiple queries in order|
 |[tempfile](tempfile)|<span class='vql_type'>Function</span>|Create a temporary file and write some data into it|
 |[upload](upload)|<span class='vql_type'>Function</span>|Upload a file to the upload service|
 |[upload](upload)|<span class='vql_type'>Plugin</span>|Upload files to the server|
@@ -75,4 +76,3 @@ or in condition clauses (i.e. after the `WHERE` keyword).
 |[upload_s3](upload_s3)|<span class='vql_type'>Function</span>|Upload files to S3|
 |[whoami](whoami)|<span class='vql_type'>Function</span>|Returns the username that is running the query|
 |[write_csv](write_csv)|<span class='vql_type'>Plugin</span>|Write a query into a CSV file|
-|[yara](yara)|<span class='vql_type'>Plugin</span>|Scan files using yara rules|

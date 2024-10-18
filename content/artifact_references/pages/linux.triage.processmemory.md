@@ -7,7 +7,7 @@ tags: [Client Artifact]
 Dump process memory and upload to the server
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Linux.Triage.ProcessMemory
 description: |
   Dump process memory and upload to the server
@@ -19,6 +19,10 @@ parameters:
     type: int
     default: 2215
 
+column_types:
+  - name: CrashDump
+    type: preview_upload
+
 sources:
   - query: |
       SELECT Name as ProcessName, CommandLine, Pid,
@@ -26,4 +30,5 @@ sources:
                     accessor="process") as CrashDump
       FROM pslist(pid=processPid)
 
-```
+</code></pre>
+

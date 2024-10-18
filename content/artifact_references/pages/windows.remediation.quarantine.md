@@ -6,51 +6,81 @@ tags: [Client Artifact]
 
 **Apply quarantine via Windows local IPSec policy**
 
-- By default the current client configuration is applied as an exclusion
-using resolved IP address at time of application.
-- A configurable lookup table is also used to generate additional entries
-using the same syntax as netsh ipsec configuration.
-  - DNS and DHCP are
-entires here allowed by default.
-- An optional MessageBox may also be configured to alert all logged in users.
+- By default the current client configuration is applied as an
+  exclusion using resolved IP address at time of application.
+
+- A configurable lookup table is also used to generate
+  additional entries using the same syntax as netsh ipsec
+  configuration.
+
+  - DNS and DHCP are entires here allowed by default.
+
+- An optional MessageBox may also be configured to alert all
+  logged in users.
+
   - The message will be truncated to 256 characters.
+
 - After policy application, connection back to the Velociraptor
-frontend is tested and the policy removed if connection unavailable.
+  frontend is tested and the policy removed if connection
+  unavailable.
+
 - To remove policy, select the RemovePolicy checkbox.
+
 - To update policy, simply rerun the artifact.
 
 NOTE:
 
-- Remember DNS resolution may change. It is highly recommended to plan
-policy accordingly and not rely on DNS lookups.
+- Remember DNS resolution may change. It is highly recommended
+  to plan policy accordingly and not rely on DNS lookups.
+
 - Local IPSec policy can not be applied when Domain IPSec policy
-is already enforced. Please configure at GPO level in this case.
+  is already enforced. Please configure at GPO level in this case.
+
+- This artifact deliberately does not support connecting back on
+  plain http! We only support the https or wss protocols because
+  this is the recommended connectivity mechanism between server
+  and client.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Remediation.Quarantine
 description: |
       **Apply quarantine via Windows local IPSec policy**
 
-      - By default the current client configuration is applied as an exclusion
-      using resolved IP address at time of application.
-      - A configurable lookup table is also used to generate additional entries
-      using the same syntax as netsh ipsec configuration.
-        - DNS and DHCP are
-      entires here allowed by default.
-      - An optional MessageBox may also be configured to alert all logged in users.
+      - By default the current client configuration is applied as an
+        exclusion using resolved IP address at time of application.
+
+      - A configurable lookup table is also used to generate
+        additional entries using the same syntax as netsh ipsec
+        configuration.
+
+        - DNS and DHCP are entires here allowed by default.
+
+      - An optional MessageBox may also be configured to alert all
+        logged in users.
+
         - The message will be truncated to 256 characters.
+
       - After policy application, connection back to the Velociraptor
-      frontend is tested and the policy removed if connection unavailable.
+        frontend is tested and the policy removed if connection
+        unavailable.
+
       - To remove policy, select the RemovePolicy checkbox.
+
       - To update policy, simply rerun the artifact.
 
       NOTE:
 
-      - Remember DNS resolution may change. It is highly recommended to plan
-      policy accordingly and not rely on DNS lookups.
+      - Remember DNS resolution may change. It is highly recommended
+        to plan policy accordingly and not rely on DNS lookups.
+
       - Local IPSec policy can not be applied when Domain IPSec policy
-      is already enforced. Please configure at GPO level in this case.
+        is already enforced. Please configure at GPO level in this case.
+
+      - This artifact deliberately does not support connecting back on
+        plain http! We only support the https or wss protocols because
+        this is the recommended connectivity mechanism between server
+        and client.
 
 author: Matt Green - @mgreen27
 
@@ -73,20 +103,29 @@ parameters:
         Permit,me,,0,any,,53,tcp,yes,DNS TCP
         Permit,me,,68,any,,67,udp,yes,DHCP
         Block,any,,,any,,,,yes,All other traffic
+
   - name: MessageBox
     description: |
         Optional message box notification to send to logged in users. 256
         character limit.
+
   - name: RemovePolicy
     type: bool
     description: Tickbox to remove policy.
 
+  - name: VelociraptorURL
+    description: |
+      A URL for allowing connections back to the
+      Velociraptor server. If not specified we use the first URL in the
+      client's configuration file.
+
 sources:
     - query: |
+        LET AllURLs &lt;= filter(list=config.server_urls + VelociraptorURL, regex='.+')
 
         // If a MessageBox configured truncate to 256 character limit
-        LET MessageBox <= parse_string_with_regex(
-                  regex='^(?P<Message>.{0,255}).*',
+        LET MessageBox &lt;= parse_string_with_regex(
+                  regex='^(?P&lt;Message&gt;.{0,255}).*',
                   string=MessageBox).Message
 
         // Normalise Action
@@ -96,7 +135,7 @@ sources:
                   then= 'Block'))
 
         // extract configurable policy from lookuptable
-        LET configurable_policy <= SELECT
+        LET configurable_policy &lt;= SELECT
                   normalise_action(Action=Action) AS Action,
                   SrcAddr,SrcMask,SrcPort,
                   DstAddr,DstMask,DstPort,
@@ -104,18 +143,15 @@ sources:
               FROM RuleLookupTable
 
         // Parse a URL to get domain name.
-        LET get_domain(URL) = parse_string_with_regex(
-             string=URL, regex='^https?://(?P<Domain>[^:/]+)').Domain
+        LET get_domain(URL) = split(string=url(parse=URL).Host, sep=":")[0]
 
-        // Parse a URL to get the port
-        LET get_port(URL) = if(condition= URL=~"https://[^:]+/", then="443",
-              else=if(condition= URL=~"http://[^:]+/", then="80",
-              else=parse_string_with_regex(string=URL,
-                  regex='^https?://[^:/]+(:(?P<Port>[0-9]*))?/').Port))
+        // Parse a URL to get the port or use 443. We deliberately do
+        // not support plain http!
+        LET get_port(URL) = split(string=url(parse=URL).Host, sep=":")[1] || "443"
 
         // extract Velociraptor config for policy
-        LET extracted_config <= SELECT * FROM foreach(
-                  row=config.server_urls,
+        LET extracted_config &lt;= SELECT * FROM foreach(
+                  row= AllURLs,
                   query={
                       SELECT
                           'Permit' AS Action,
@@ -133,7 +169,7 @@ sources:
                   })
 
         // build policy with extracted config and lookuptable
-        LET policy <= SELECT *
+        LET policy &lt;= SELECT *
               FROM chain(
                   a=extracted_config,
                   b=configurable_policy
@@ -274,8 +310,12 @@ sources:
                           Url,
                           response
                       FROM
-                          http_client(url='https://' + DstAddr + ':' + DstPort + '/server.pem',
-                              disable_ssl_security='TRUE')
+                          -- Always use https even when configured for wss
+                          http_client(url=url(
+                              scheme='https',
+                              host=DstAddr + ':' + DstPort,
+                              path='/server.pem').String)
+
                       WHERE Response = 200
                       LIMIT 1
                   })
@@ -318,4 +358,5 @@ sources:
                           h=final_check)
                   })
 
-```
+</code></pre>
+

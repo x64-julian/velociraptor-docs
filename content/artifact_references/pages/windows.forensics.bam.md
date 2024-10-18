@@ -12,7 +12,7 @@ It provides full path of the executable file that was run on the
 system and last execution date/time
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Forensics.Bam
 description: |
   The Background Activity Moderator (BAM) is a Windows service that
@@ -23,7 +23,7 @@ description: |
   system and last execution date/time
 
 reference:
-  - https://www.andreafortuna.org/dfir/forensic-artifacts-evidences-of-program-execution-on-windows-systems/
+  - https://andreafortuna.org/2018/05/23/forensic-artifacts-evidences-of-program-execution-on-windows-systems/
 
 parameters:
   - name: bamKeys
@@ -40,7 +40,7 @@ sources:
   - precondition:
       SELECT OS from info() where OS = "windows"
     query: |
-        LET users <= SELECT Name, UUID
+        LET users &lt;= SELECT Name, UUID
             FROM Artifact.Windows.Sys.Users()
             WHERE Name =~ userRegex
 
@@ -55,4 +55,5 @@ sources:
         FROM glob(globs=bamKeys.KeyGlob, accessor="registry")
         WHERE Data.type =~ "BINARY"
 
-```
+</code></pre>
+

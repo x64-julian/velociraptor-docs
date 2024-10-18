@@ -10,7 +10,7 @@ drives unless removed so is a great hunt for simple admin $ mapping based
 lateral movement.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Registry.MountPoints2
 description: |
     This detection will collect any items in the MountPoints2 registry key.
@@ -40,6 +40,7 @@ sources:
           OSPath.DelegatePath as Hive,
           OSPath.Path as Key
         FROM Artifact.Windows.Registry.NTUser(KeyGlob=KeyGlob)
-        WHERE FullPath =~ MountPointFilterRegex
+        WHERE OSPath =~ MountPointFilterRegex
 
-```
+</code></pre>
+

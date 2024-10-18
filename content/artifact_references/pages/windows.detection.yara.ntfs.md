@@ -28,11 +28,11 @@ Some examples of path regex may include:
 
 Note: no drive and forward slashes - these expressions are for paths
 relative to the root of the filesystem.
-If upload is selected NumberOfHits is redundant and not advised as hits are 
+If upload is selected NumberOfHits is redundant and not advised as hits are
 grouped by path to ensure files only downloaded once.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Detection.Yara.NTFS
 author: Matt Green - @mgreen27
 description: |
@@ -60,7 +60,7 @@ description: |
 
   Note: no drive and forward slashes - these expressions are for paths
   relative to the root of the filesystem.
-  If upload is selected NumberOfHits is redundant and not advised as hits are 
+  If upload is selected NumberOfHits is redundant and not advised as hits are
   grouped by path to ensure files only downloaded once.
 
 type: CLIENT
@@ -70,7 +70,7 @@ parameters:
     default: ^kernel32\.dll$
   - name: PathRegex
     description: Only paths that match this regular expression will be scanned.
-    default: ^C:\\Windows\\System32\\
+    default: C:\\Windows\\System32\\
   - name: DriveLetter
     description: "Target drive. Default is a C:"
     default: "C:"
@@ -115,8 +115,8 @@ parameters:
     description: Include this amount of bytes around hit as context.
     default: 0
     type: int
-    
-    
+
+
 sources:
   - precondition:
       SELECT OS From info() where OS = 'windows'
@@ -130,21 +130,21 @@ sources:
             OSPath, IsDir
         FROM Artifact.Windows.NTFS.MFT(
             MFTDrive=DriveLetter, AllDrives=AllDrives,
-            FileRegex=FileNameRegex,PathRegex=PathRegex, 
+            FileRegex=FileNameRegex,PathRegex=PathRegex,
             SizeMax=SizeMax, SizeMin=SizeMin)
         WHERE NOT IsDir
-            AND NOT OSPath =~ '''\\\\.\\.:\\<Err>\\'''
+            AND NOT OSPath =~ '''\\\\.\\.:\\&lt;Err&gt;\\'''
             AND if(condition=EarliestSILastChanged,
-                then= LastRecordChange0x10 > EarliestSILastChanged,
+                then= LastRecordChange0x10 &gt; EarliestSILastChanged,
                 else= True)
             AND if(condition=LatestSILastChanged,
-                then= LastRecordChange0x10 < LatestSILastChanged,
+                then= LastRecordChange0x10 &lt; LatestSILastChanged,
                 else= True)
             AND if(condition=EarliestFNCreated,
-                then= Created0x30 > EarliestFNCreation,
+                then= Created0x30 &gt; EarliestFNCreation,
                 else= True)
             AND if(condition=LatestFNCreated,
-                then= Created0x30 < LatestFNCreation,
+                then= Created0x30 &lt; LatestFNCreation,
                 else= True)
 
       -- scan files and only report a single hit.
@@ -157,19 +157,22 @@ sources:
                     Rule, Tags, Meta,
                     String.Name as YaraString,
                     String.Offset as HitOffset,
-                    upload( accessor='scope', 
-                            file='String.Data', 
-                            name=format(format="%v-%v-%v", 
+                    if(condition=String.Data,
+                       then=upload(
+                            accessor='scope',
+                            file='String.Data',
+                            name=format(format="%v-%v-%v",
                             args=[
                                 OSPath,
-                                if(condition= String.Offset - ContextBytes < 0,
+                                if(condition= String.Offset - ContextBytes &lt; 0,
                                     then= 0,
                                     else= String.Offset - ContextBytes),
-                                if(condition= String.Offset + ContextBytes > File.Size,
+                                if(condition= String.Offset + ContextBytes &gt; File.Size,
                                     then= File.Size,
                                     else= String.Offset + ContextBytes) ]
-                            )) as HitContext
-                FROM yara(rules=yara_rules, files=OSPath, context=ContextBytes,number=NumberOfHits)
+                            ))) as HitContext
+                FROM yara(rules=yara_rules,
+                   files=OSPath, context=ContextBytes, number=NumberOfHits)
             })
 
       -- upload files that have hit
@@ -186,4 +189,6 @@ sources:
 column_types:
   - name: HitContext
     type: preview_upload
-```
+
+</code></pre>
+

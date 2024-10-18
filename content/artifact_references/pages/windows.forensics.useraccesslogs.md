@@ -19,7 +19,7 @@ is commonly explained in the references below. Velociraptor should
 have no trouble parsing these files on the live system.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Forensics.UserAccessLogs
 description: |
   Parse and collect the SUM database
@@ -43,13 +43,26 @@ reference:
 
 export: |
     LET IPProfile = '''[
-      ["X", 0, [
+      ["IP4", 0, [
         ["A", 0, "uint8"],
         ["B", 1, "uint8"],
         ["C", 2, "uint8"],
         ["D", 3, "uint8"],
         ["IP", 0, "Value", {
-           value: "x=> format(format='%d.%d.%d.%d', args=[x.A, x.B, x.C, x.D])"
+           value: "x=&gt; format(format='%d.%d.%d.%d', args=[x.A, x.B, x.C, x.D])"
+        }]
+      ]],
+     ["IP6", 0, [
+        ["A", 0, "uint16be"],
+        ["B", 2, "uint16be"],
+        ["C", 4, "uint16be"],
+        ["D", 6, "uint16be"],
+        ["E", 8, "uint16be"],
+        ["F", 10, "uint16be"],
+        ["G", 12, "uint16be"],
+        ["H", 14, "uint16be"],
+        ["IP", 0, "Value", {
+           value: "x=&gt; format(format='%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x', args=[x.A, x.B, x.C, x.D, x.E, x.F, x.G, x.H])"
         }]
       ]]
     ]'''
@@ -59,12 +72,14 @@ export: |
 
          -- IPv4 address should be formatted in dot notation
          then=parse_binary(accessor="data",
-                           filename=Address, struct="X",
+                           filename=Address, struct="IP4",
                            profile=IPProfile).IP,
+
          else=if(condition=len(list=Address)=16,
            -- IPv6 addresses are usually shortened
-           then=regex_replace(source=format(format="%x", args=Address),
-                              re="(00)+", replace=":"),
+           then=parse_binary(accessor="data",
+                           filename=Address, struct="IP6",
+                           profile=IPProfile).IP,
 
            -- We dont know what kind of address it is.
            else=format(format="%x", args=Address)))
@@ -74,7 +89,7 @@ export: |
       WHERE Name =~ "SystemIdentity.mdb"
 
     -- Prepare a Role lookup to resolve the role GUID
-    LET RoleLookup <= memoize(key="RoleGuid", query={
+    LET RoleLookup &lt;= memoize(key="RoleGuid", query={
       SELECT * FROM foreach(row=SystemIdentity, query={
          SELECT * FROM parse_ese(file=OSPath, table="ROLE_IDS")
          WHERE log(message="RoleGuid " + RoleGuid)
@@ -133,8 +148,8 @@ sources:
                })) AS Value
             FROM items(item={
                SELECT *, get(item=RoleLookup, field=RoleGuid).RoleName AS RoleName,
-                  format(format="%02x", args=Address) AS RawAddress,
-                  FormatAddress(Address=Address) AS Address
+                  Address AS RawAddress,
+                  FormatAddress(Address=unhex(string=Address)) AS Address
                FROM parse_ese(file=OSPath, table="CLIENTS")
             })
         }, column="Value")
@@ -163,4 +178,5 @@ sources:
         SELECT OSPath, if(condition=AlsoUpload, then=upload(file=OSPath))
         FROM glob(globs=SUMGlob)
 
-```
+</code></pre>
+

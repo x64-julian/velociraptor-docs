@@ -26,7 +26,7 @@ own malware to make sure they're able to execute in elevated
 contexts in the future [2].
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Linux.Sys.SUID
 description: |
   When the setuid or setgid bits are set on Linux or macOS for an
@@ -60,10 +60,11 @@ parameters:
 sources:
   - query: |
       SELECT Mode.String AS Mode,
-               FullPath, Size,
+               OSPath, Size,
                Mtime,
                Sys.Uid AS OwnerID,
                Sys.Gid AS GroupID
       FROM glob(globs=GlobExpression) WHERE Mode =~ '^g|u'
 
-```
+</code></pre>
+

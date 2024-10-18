@@ -21,14 +21,18 @@ Arg | Description | Type
 ----|-------------|-----
 path|Extract directory name of path|Any (required)
 sep|Separator to use (default /)|string
-path_type|Type of path (e.g. 'windows,linux)|string
+path_type|Type of path (e.g. windows, linux)|string
 
 ### Description
 
 Return the directory path.
 
-For example direname(path="/usr/bin/ls") -> "/usr/bin"
+### Example
 
-Related: basename()
+```vql
+dirname(path="/usr/bin/ls") -> "/usr/bin"
+```
+
+Related: `basename()`
 
 

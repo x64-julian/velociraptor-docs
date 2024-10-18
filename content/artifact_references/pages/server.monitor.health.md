@@ -13,7 +13,7 @@ Alternatively, edit the Welcome screen at the
 `Server.Internal.Welcome` artifact.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Server.Monitor.Health
 description: |
   This is the main server health dashboard. It is shown on the
@@ -28,10 +28,7 @@ type: SERVER_EVENT
 
 sources:
   - name: Prometheus
-
-    # This artifact is populated by the frontend service using the
-    # total of all frontend metrics.
-    query: SELECT * FROM info() WHERE FALSE
+    query: SELECT sleep(time=10000000) FROM scope()
 
 reports:
   - type: SERVER_EVENT
@@ -46,9 +43,10 @@ reports:
       {{ define "CPU" }}
           SELECT _ts as Timestamp,
               CPUPercent,
-              MemoryUse / 1048576 AS MemoryUse,
+              int(int=MemoryUse / 1048576) AS MemoryUse_Mb,
               TotalFrontends
           FROM source(source="Prometheus",
+                      start_time=StartTime, end_time=EndTime,
                       artifact="Server.Monitor.Health")
       {{ end }}
 
@@ -59,33 +57,34 @@ reports:
                SELECT _ts as Timestamp,
                   client_comms_current_connections
                FROM source(source="Prometheus",
+                           start_time=StartTime, end_time=EndTime,
                            artifact="Server.Monitor.Health")
             })
       {{ end }}
 
-      {{ $time := Query "SELECT timestamp(epoch=now()) AS Now FROM scope()" | Expand }}
+      {{ $time_rows := Query "SELECT timestamp(epoch=now()) AS Now FROM scope()" | Expand }}
+      {{ $time := Get $time_rows "0.Now" }}
+      ## Server status @ &lt;velo-value value="{{ $time.Format "2006-01-02T15:04:05Z07:00" }}" /&gt;
 
-      ## Server status @ {{ Get $time "0.Now" }}
-
-      <p>The following are total across all frontends.</p>
-          <span class="container">
-            <span class="row">
-              <span class="col-sm panel">
+      &lt;p&gt;The following are total across all frontends.&lt;/p&gt;
+          &lt;span class="container"&gt;
+            &lt;span class="row"&gt;
+              &lt;span class="col-sm panel"&gt;
                CPU and Memory Utilization
                {{- Query "CPU" | LineChart "xaxis_mode" "time" "RSS.yaxis" 2 -}}
-              </span>
-              <span class="col-sm panel">
+              &lt;/span&gt;
+              &lt;span class="col-sm panel"&gt;
                Currently Connected Clients
                {{- Query "CurrentConnections" | LineChart "xaxis_mode" "time" "RSS.yaxis" 2 -}}
-              </span>
-            </span>
-      </span>
+              &lt;/span&gt;
+            &lt;/span&gt;
+      &lt;/span&gt;
 
       ## Current Orgs
 
-      {{ Query "LET ColumnTypes <= dict(ClientConfig='url_internal') \
+      {{ Query "LET ColumnTypes &lt;= dict(ClientConfig='url_internal') \
                 SELECT Name, OrgId, \
-                       format(format='[%s](/notebooks/Dashboards/%s/uploads/client.%s.config.yaml)', \
+                       format(format='[%s](/notebooks/Dashboards/%s/uploads/data/client.%s.config.yaml)', \
                        args=[OrgId, ArtifactName, OrgId]) AS ClientConfig, \
                        upload(accessor='data', file=_client_config, \
                               name='client.'+OrgId+'.config.yaml') AS _Upload \
@@ -107,6 +106,7 @@ reports:
 
       ## Server version
 
-      {{ Query "SELECT Version FROM config" | Table }}
+      {{ Query "SELECT server_version FROM config" | Table }}
 
-```
+</code></pre>
+

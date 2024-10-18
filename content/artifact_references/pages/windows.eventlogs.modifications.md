@@ -12,7 +12,7 @@ This artifact reads the state of the event log system from the
 registry and attempts to detect when event logs were disabled.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.EventLogs.Modifications
 description: |
   It is possible to disable windows event logs on a per channel or per
@@ -41,21 +41,21 @@ sources:
     description: Detects status of log channels (event log files).
     query: |
       -- Build time bounds
-      LET DateAfterTime <= if(condition=DateAfter,
+      LET DateAfterTime &lt;= if(condition=DateAfter,
             then=DateAfter, else=timestamp(epoch="1600-01-01"))
-      LET DateBeforeTime <= if(condition=DateBefore,
+      LET DateBeforeTime &lt;= if(condition=DateBefore,
             then=DateBefore, else=timestamp(epoch="2200-01-01"))
 
       LET Key = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\WINEVT\\Channels\\*"
 
       SELECT Key.Mtime AS Mtime,
-             basename(path=Key.FullPath) AS ChannelName,
-             Key.FullPath AS _Key,
+             basename(path=Key.OSPath) AS ChannelName,
+             Key.OSPath AS _Key,
              OwningPublisher, Enabled
       FROM read_reg_key(globs=Key)
       WHERE ChannelName =~ ProviderRegex
-        AND Mtime > DateAfterTime
-        AND Mtime < DateBeforeTime
+        AND Mtime &gt; DateAfterTime
+        AND Mtime &lt; DateBeforeTime
 
   - name: Providers
     description: Inspect the state of each provider
@@ -63,16 +63,16 @@ sources:
       LET Key = "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\WMI\\Autologger\\EventLog-System\\**\\Enabled"
       LET Publishers = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\WINEVT\\Publishers\\*\\@"
 
-      LET ProviderNames <= memoize(key="GUID", query={
+      LET ProviderNames &lt;= memoize(key="GUID", query={
         SELECT OSPath.Components[-2] AS GUID,
                Data.value AS Name
         FROM glob(globs=Publishers, accessor="registry")
       })
 
       LET X = SELECT Mtime,
-                     basename(path=dirname(path=FullPath)) AS GUID,
+                     OSPath.Dirname.Basename AS GUID,
                      Data.value AS Enabled,
-                     dirname(path=FullPath) AS Key,
+                     OSPath.Dirname AS Key,
                      to_dict(item={
                         SELECT Name AS _key, Data.value AS _value
                         FROM glob(root=OSPath.Dirname,
@@ -86,8 +86,9 @@ sources:
          Enabled, Content
       FROM X
       WHERE ProviderName =~ ProviderRegex
-        AND Mtime > DateAfterTime
-        AND Mtime < DateBeforeTime
+        AND Mtime &gt; DateAfterTime
+        AND Mtime &lt; DateBeforeTime
       ORDER BY ProviderName
 
-```
+</code></pre>
+

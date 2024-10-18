@@ -16,7 +16,7 @@ Currently handles only GPT (Most common) and Primary Dos partition
 tables
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Forensics.PartitionTable
 description: |
   Parses the raw disk for partition tables.
@@ -34,9 +34,19 @@ parameters:
   - name: ImagePath
     default: "\\\\?\\GLOBALROOT\\Device\\Harddisk0\\DR0"
     description: Raw Device for main disk containing partition table to parse.
+  - name: Accessor
+    default: "raw_file"
   - name: SectorSize
     type: int
     default: 512
+  - name: MagicRegex
+    type: regex
+    description: Filter partitions by their magic
+    default: .
+  - name: NameRegex
+    type: regex
+    description: Filter partitions by their magic
+    default: .
 
 export: |
     LET MBRProfile = '''[
@@ -75,15 +85,15 @@ export: |
          ["tab_size", 84, "uint32"],
          ["entries", 0, "Profile", {
             type: "Array",
-            offset: "x=>x.tab_start_lba * 512",
+            offset: "x=&gt;x.tab_start_lba * 512",
             type_options: {
              type: "GPTEntry",
-             count: "x=>x.tab_num",
+             count: "x=&gt;x.tab_num",
             }}]
         ]],
         ["GPTEntry", 128, [
           ["Offset", 0, "Value", {
-              value: "x=>x.StartOf",
+              value: "x=&gt;x.StartOf",
           }],
           ["type_guid", 0, GUID],
           ["id_guid", 16, GUID],
@@ -101,7 +111,7 @@ export: |
           ["__D4", 6, "String", {"term": "", "length": 2}],
           ["__D5", 8, "String", {"term": "", "length": 6}],
           ["Value", 0, "Value", {
-            "value": "x=>format(format='{%08x-%04x-%04x-%02x-%02x}', args=[x.__D1, x.__D2, x.__D3, x.__D4, x.__D5])"
+            "value": "x=&gt;format(format='{%08x-%04x-%04x-%02x-%02x}', args=[x.__D1, x.__D2, x.__D3, x.__D4, x.__D5])"
           }]
         ]]
         ]
@@ -109,14 +119,14 @@ export: |
 
 sources:
   - query: |
-        LET GPTHeader <= parse_binary(filename=ImagePath,
-           accessor="raw_file",
+        LET GPTHeader &lt;= parse_binary(filename=ImagePath,
+           accessor=Accessor,
            profile=MBRProfile,
            struct="GPTHeader",
            offset=SectorSize)
 
-        LET PrimaryPartitions <= parse_binary(filename=ImagePath,
-           accessor="raw_file",
+        LET PrimaryPartitions &lt;= parse_binary(filename=ImagePath,
+           accessor=Accessor,
            profile=MBRProfile,
            struct="MBRHeader",
            offset=0)
@@ -130,7 +140,7 @@ sources:
                  humanize(bytes=(end_lba - start_lba) * SectorSize) AS Size,
                  name
           FROM foreach(row=GPTHeader.entries)
-          WHERE start_lba > 0
+          WHERE start_lba &gt; 0
         })
 
         -- Display primary partitions
@@ -139,23 +149,43 @@ sources:
             humanize(bytes=size_sec * SectorSize) AS Size,
             ptype AS name
         FROM foreach(row=PrimaryPartitions.PrimaryPartitions)
-        WHERE start_sec > 0
+        WHERE start_sec &gt; 0
 
-        SELECT StartOffset, EndOffset, Size, name, {
-              SELECT OSPath.Path AS FullPath
-              FROM glob(globs="/*",
-                        accessor="raw_ntfs",
-                        root=pathspec(
-                          DelegateAccessor="offset",
-                          DelegatePath=pathspec(
-                            DelegateAccessor="raw_file",
-                            DelegatePath=ImagePath,
-                            Path=format(format="%d", args=StartOffset))))
-                 } AS TopLevelDirectory,
+        -- Handle the correct partition types
+        LET GetAccessor(Magic) =
+        if(condition=Magic =~ "NTFS", then="raw_ntfs",
+           else=if(condition=Magic =~ "FAT", then="fat"))
+
+        LET ListTopDirectory(PartitionPath, Magic) =
+        SELECT * FROM if(condition=GetAccessor(Magic=Magic), then={
+            SELECT OSPath.Path AS OSPath
+            FROM glob(globs="/*",
+                      accessor=GetAccessor(Magic=Magic),
+                      root=PartitionPath)
+        })
+
+        LET PartitionList = SELECT StartOffset, EndOffset, Size, name,
             magic(accessor="data", path=read_file(
-              accessor="raw_file",
+              accessor=Accessor,
               filename=ImagePath,
-              offset=StartOffset, length=10240)) AS Magic
-        FROM chain(a=PARTS, b=GPT)
+              offset=StartOffset, length=10240)) AS Magic,
 
-```
+            -- The OSPath to access the partition
+            pathspec(
+              DelegateAccessor="offset",
+              DelegatePath=pathspec(
+                 DelegateAccessor=Accessor,
+                 DelegatePath=ImagePath,
+                 Path=format(format="%d", args=StartOffset))) AS _PartitionPath
+        FROM chain(a=PARTS, b=GPT)
+        WHERE name =~ NameRegex
+          AND Magic =~ MagicRegex
+
+        SELECT StartOffset, EndOffset, Size, name,
+            ListTopDirectory(Magic=Magic,
+              PartitionPath= _PartitionPath).OSPath AS TopLevelDirectory,
+            Magic, _PartitionPath
+        FROM PartitionList
+
+</code></pre>
+

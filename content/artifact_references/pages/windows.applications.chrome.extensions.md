@@ -15,8 +15,13 @@ description. In this case we detect the default locale and load
 those locale files. We then resolve the extension's name and
 description from there.
 
+## NOTES:
 
-```yaml
+This artifact is deprecated in favor of
+Generic.Forensic.SQLiteHunter and will be removed in future
+
+
+<pre><code class="language-yaml">
 name: Windows.Applications.Chrome.Extensions
 description: |
   Fetch Chrome extensions.
@@ -29,6 +34,12 @@ description: |
   description. In this case we detect the default locale and load
   those locale files. We then resolve the extension's name and
   description from there.
+
+  ## NOTES:
+
+  This artifact is deprecated in favor of
+  Generic.Forensic.SQLiteHunter and will be removed in future
+
 
 parameters:
   - name: extensionGlobs
@@ -51,7 +62,7 @@ sources:
              WHERE Name =~ userRegex
           },
           query={
-             SELECT FullPath, Mtime, Ctime, User, Uid
+             SELECT OSPath, Mtime, Ctime, User, Uid
              FROM glob(root=Directory, globs=extensionGlobs)
           })
 
@@ -94,7 +105,7 @@ sources:
              SELECT Filename as ManifestFilename,
                     Uid, User,
                     parse_json(data=Data) as Manifest
-             FROM read_file(filenames=FullPath)
+             FROM read_file(filenames=OSPath)
            },
            query=maybe_read_locale_file)
 
@@ -148,4 +159,5 @@ sources:
 
         FROM parsed_manifest_files
 
-```
+</code></pre>
+

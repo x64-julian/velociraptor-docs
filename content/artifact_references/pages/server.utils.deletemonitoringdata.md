@@ -17,7 +17,7 @@ optionally removes data older than the specified timestamp.
   will match before using the ReallyDoIt option.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Server.Utils.DeleteMonitoringData
 description: |
    Velociraptor collects monitoring data from endpoints all the time.
@@ -57,16 +57,17 @@ sources:
             WHERE hostname =~ HostnameRegex
         },
         query={
-            SELECT FullPath,
-                basename(path=dirname(path=FullPath)) AS ArtifactName, Size,
+            SELECT OSPath,
+                OSPath.Dirname.Basename AS ArtifactName, Size,
                 timestamp(epoch=
-                 split(string=basename(path=FullPath), sep="\\.")[0]) AS Timestamp,
-                 if(condition=ReallyDoIt, then=file_store_delete(path=FullPath)) AS ReallyDoIt
+                 split(string=OSPath.Basename, sep="\\.")[0]) AS Timestamp,
+                 if(condition=ReallyDoIt, then=file_store_delete(path=OSPath)) AS ReallyDoIt
             FROM glob(
                globs="/**.json*", accessor="fs",
                root="/clients/"+ client_id + "/monitoring")
             WHERE ArtifactName =~ ArtifactRegex
-              AND Timestamp < DateBefore
+              AND Timestamp &lt; DateBefore
         }, workers=10)
 
-```
+</code></pre>
+

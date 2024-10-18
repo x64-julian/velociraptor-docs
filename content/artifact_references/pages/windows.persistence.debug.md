@@ -19,7 +19,7 @@ Limitations: This queries the live registry and therefore does not
 parse data in Windows.old or Regback folders, or VSS.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.Persistence.Debug
 description: |
   Windows allows specific configuration of various executables via a
@@ -47,11 +47,12 @@ sources:
   - query: |
         LET X = scope()
         SELECT Key.ModTime as KeyLastWriteTimestamp,
-               Key.FullPath as _Key,
+               Key.OSPath as _Key,
                Key.Name AS Program,
                X.Debugger AS Debugger
         FROM read_reg_key(globs=imageFileExecutionOptions)
         WHERE Debugger
         Order By KeyLastWriteTimestamp
 
-```
+</code></pre>
+

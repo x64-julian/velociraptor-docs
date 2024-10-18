@@ -7,7 +7,7 @@ tags: [Client Artifact]
 List processes and their running binaries.
 
 
-```yaml
+<pre><code class="language-yaml">
 name: Windows.System.Pslist
 description: |
   List processes and their running binaries.
@@ -34,10 +34,15 @@ parameters:
   - name: UseTracker
     type: bool
     description: If set we use the process tracker.
+  - name: DISABLE_DANGEROUS_API_CALLS
+    type: bool
+    description: |
+      Enable this to disable potentially flakey APIs which may cause
+      crashes.
 
 sources:
   - precondition: SELECT OS From info() where OS = 'windows'
-    
+
     query: |
         LET ProcList = SELECT * FROM if(condition=UseTracker,
         then={
@@ -49,7 +54,7 @@ sources:
         })
 
         SELECT Pid, Ppid, TokenIsElevated, Name, CommandLine, Exe,
-            token(pid=Pid) as TokenInfo,
+            token(pid=int(int=Pid)) as TokenInfo,
             hash(path=Exe) as Hash,
             authenticode(filename=Exe) AS Authenticode,
             Username, Memory.WorkingSetSize AS WorkingSetSize
@@ -63,4 +68,5 @@ sources:
                         then= Authenticode.Trusted = 'trusted' OR NOT Exe,
                         else= False )
 
-```
+</code></pre>
+
